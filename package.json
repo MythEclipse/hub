@@ -4,17 +4,17 @@
   "version": "0.1.0",
   "description": "Asepharyana Hub — personal portfolio SPA (Next.js)",
   "private": true,
-  "packageManager": "bun@1.4.0",
+  "packageManager": "pnpm@10.33.2",
   "engines": {
-    "bun": ">=1.4.0",
-    "node": ">=22"
+    "node": ">=22.12.0"
   },
   "scripts": {
     "build": "next build",
     "dev": "next dev",
     "format": "biome format --write",
     "lint": "biome check",
-    "start": "next start"
+    "start": "next start",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

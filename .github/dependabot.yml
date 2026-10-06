@@ -1,5 +1,8 @@
 version: 2
 updates:
+  # Dependabot has no "pnpm" YAML value: GitHub's supported-ecosystems table maps
+  # the pnpm package manager to "npm", and it picks up pnpm-lock.yaml there.
+  # Changing this to "pnpm" would make the config invalid and stop all updates.
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
