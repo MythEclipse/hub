@@ -6,17 +6,24 @@ Wants=network-online.target
 
 [Service]
 Type=simple
+User=hub
+Group=hub
 # The symlink, not a pinned release path: the deploy flips
 # /opt/hub/current atomically, so code and static assets swap together and
 # WEB_DIST_PATH resolves through the same switch.
 WorkingDirectory=/opt/hub/current
-EnvironmentFile=-/opt/hub/current/.env
+# Runtime env (PORT, NODE_ENV, WEB_DIST_PATH) comes from Bitwarden Secrets
+# Manager via the bws-exec wrapper — keys are stored as hub_<NAME> and the
+# hub_ prefix is stripped to form the variable name. There is deliberately no
+# EnvironmentFile= line: systemd loads those BEFORE ExecStartPre runs, which
+# is exactly the ordering problem the wrapper exists to solve.
 Environment=NODE_ENV=production
 Environment=PORT=4003
 # apps/api/dist/main.js — tsup emits .js because apps/api sets "type":"module".
-ExecStart=/usr/bin/node apps/api/dist/main.js
+ExecStart=/usr/local/bin/bws-exec hub /usr/bin/node apps/api/dist/main.js
 Restart=on-failure
 RestartSec=3
+LimitNOFILE=65536
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=hub
