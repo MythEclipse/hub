@@ -31,7 +31,8 @@ PREV_DIR="${CURRENT_LINK}.previous"
 UNIT="${UNIT:-hub}"
 PORT="${PORT:-4003}"
 HEALTH_URL="${HEALTH_URL:-http://127.0.0.1:${PORT}/}"
-KEEP_RELEASES="${KEEP_RELEASES:-5}"
+# Total on disk, live included: 2 = the live release + one rollback target.
+KEEP_RELEASES="${KEEP_RELEASES:-2}"
 SKIP_RESTART="${SKIP_RESTART:-0}"
 
 log() { printf '[deploy] %s\n' "$*"; }
@@ -231,18 +232,55 @@ else
 fi
 
 # ── 6. prune old releases ──────────────────────────────────────────────────
-active_target="$(readlink "$CURRENT_LINK")"
-kept=0
-while IFS= read -r dir; do
-  [ -n "$dir" ] || continue
-  [ "$dir" = "$active_target" ] && continue
-  [ "$dir" = "$RELEASE_DIR" ] && continue
-  [ "$dir" = "$PREV_DIR" ] && continue
-  kept=$((kept + 1))
-  if [ "$kept" -gt "$KEEP_RELEASES" ]; then
-    log "pruning old release $(basename "$dir")"
-    as_root rm -rf "$dir"
-  fi
-done < <(ls -1dt "$RELEASES_DIR"/*/ 2>/dev/null || true)
+# Keep the live release plus exactly ONE rollback target.
+#
+# A rollback is `ln -sfn releases/<prev> current && systemctl restart`, which
+# needs only the single previous release on disk. Everything older is
+# unreachable, so keeping more than 2 buys nothing and costs a full checkout
+# per deploy — this was 3 x ~700M for scraper alone.
+#
+# Runs LAST, after the health check, and that ordering is load-bearing: pruning
+# first would destroy the rollback target of the release you are rolling back
+# TO, turning a failed deploy into an unrecoverable one.
+#
+# `current` is resolved to its basename before comparing: readlink returns the
+# absolute path, while the loop yields `dir/` with a trailing slash, so a
+# string compare against the raw target can never match and the LIVE release
+# would be pruned by mtime ordering alone.
+log "pruning old releases (keeping live + 1 rollback)"
+LIVE_SHA="$(basename "$(readlink -f "$CURRENT_LINK" 2>/dev/null || echo "")")"
+[ -n "$LIVE_SHA" ] || die "could not resolve the live release from $CURRENT_LINK"
 
-log "done: $CURRENT_LINK -> $active_target"
+# KEEP_RELEASES is the TOTAL on disk, live included — not "the newest N, plus
+# the live one". Taking the newest N and only then skipping the live release
+# yields N+1 whenever the live release is older than the N newest, which is
+# exactly the rollback case this cap exists to support.
+mapfile -t KEEP < <(
+  ls -1dt "$RELEASES_DIR"/*/ 2>/dev/null \
+    | while read -r d; do printf '%s\t%s\n' "$(stat -c %Y "$d")" "$(basename "$d")"; done \
+    | sort -rn \
+    | cut -f2 \
+    | while read -r name; do
+        # The live release is already spoken for; this pass fills the rest of
+        # the budget with the newest releases that can still be rolled back TO.
+        [ "$name" = "$LIVE_SHA" ] && continue
+        printf '%s\n' "$name"
+      done \
+    | head -n "$((KEEP_RELEASES - 1))"
+)
+log "  keeping: live=$LIVE_SHA + ${KEEP[*]:-<none>}"
+
+for dir in "$RELEASES_DIR"/*/; do
+  [ -d "$dir" ] || continue
+  name="$(basename "$dir")"
+  [ "$name" = "$LIVE_SHA" ] && continue
+  [ "$name" = "$(basename "$RELEASE_DIR")" ] && continue
+  if printf '%s\n' "${KEEP[@]:-}" | grep -qx "$name"; then
+    continue
+  fi
+  log "  pruning $name ($(du -sh "$dir" 2>/dev/null | cut -f1))"
+  as_root rm -rf "$dir"
+done
+log "  releases now: $(ls -1 "$RELEASES_DIR" 2>/dev/null | wc -l)"
+
+log "done: $CURRENT_LINK -> $LIVE_SHA"

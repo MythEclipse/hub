@@ -43,6 +43,13 @@ jobs:
       - name: Test
         run: pnpm run test
 
+      - name: Release prune cap
+        # The prune block lives in bash, not in the type system, so node:test
+        # cannot see it. This runs the real block against a fixture where
+        # `current` points at the OLDEST release — the case whose broken guard
+        # would have pruned the running release.
+        run: bash scripts/tests/prune-release-cap.sh
+
       - name: Build
         run: pnpm run build
 
