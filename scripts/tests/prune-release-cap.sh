@@ -31,12 +31,16 @@ ln -s "$RELEASES_DIR/aaa1111" "$CURRENT_LINK"
 
 log() { printf '[test] %s\n' "$*"; }
 die() { printf '[test] ERROR: %s\n' "$*" >&2; exit 1; }
+# GMW prunes with a bare `sudo rm`, the others go through as_root; either is fine.
 as_root() { "$@"; }
+sudo() { "$@"; }
 RELEASE_DIR="$RELEASES_DIR/ddd4444"
 
-# Extract the real prune block from the script under test.
-sed -n '/^# ── 6\. prune old releases/,/releases now:/p' "$SRC" > "$FIX/prune.sh"
-grep -q "pruning old releases" "$FIX/prune.sh" || {
+# Locate the prune block by its terminating log line rather than its banner: the
+# sibling scripts label it differently, and matching on structure means one
+# harness can guard all of them.
+sed -n '/keeping live + 1 rollback/,/releases now:/p' "$SRC" > "$FIX/prune.sh"
+grep -q "LIVE_SHA=" "$FIX/prune.sh" || {
   echo "[test] FAILED to locate the prune block in $SRC"; exit 1; }
 
 echo "[test] --- running extracted prune block ---"
