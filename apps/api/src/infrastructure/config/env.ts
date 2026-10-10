@@ -3,7 +3,6 @@ import { z } from "zod";
 const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(4003),
   PROMETHEUS_URL: z.string().url().default("http://127.0.0.1:9090"),
-  BASE_DOMAIN: z.string().min(1).default("asepharyana.my.id"),
   GITHUB_REPO_URL: z
     .string()
     .url()

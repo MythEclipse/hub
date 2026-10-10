@@ -13,10 +13,8 @@ export interface GetOverviewDeps {
   prometheus: PrometheusClient;
   /** Units to report, in display order. */
   units: readonly string[];
-  /** Subset of `units` that has a public HTTPS endpoint behind Caddy. */
-  webUnits: ReadonlySet<string>;
-  /** Base domain used to build service links. */
-  baseDomain: string;
+  /** Subset of `units` that has a public HTTPS endpoint, mapped to its hosts. */
+  webUnits: ReadonlyMap<string, readonly string[]>;
   /** Static links always shown (e.g. the GitHub repo). */
   staticLinks: readonly DashboardLink[];
 }
@@ -60,8 +58,7 @@ export function makeGetOverview(deps: GetOverviewDeps) {
 }
 
 async function build(deps: GetOverviewDeps): Promise<DashboardOverview> {
-  const { systemd, prometheus, units, webUnits, baseDomain, staticLinks } =
-    deps;
+  const { systemd, prometheus, units, webUnits, staticLinks } = deps;
 
   const services: Service[] = await systemd.listServices(units, webUnits);
 
@@ -170,7 +167,7 @@ async function build(deps: GetOverviewDeps): Promise<DashboardOverview> {
     latency: loadSpark,
     errors: errSpark,
     traceVolume: netInSpark,
-    links: buildLinks(staticLinks, services, baseDomain),
+    links: buildLinks(staticLinks, services),
     llm,
   };
 }
@@ -178,15 +175,12 @@ async function build(deps: GetOverviewDeps): Promise<DashboardOverview> {
 function buildLinks(
   staticLinks: readonly DashboardLink[],
   services: readonly Service[],
-  baseDomain: string,
 ): DashboardLink[] {
   const links: DashboardLink[] = [...staticLinks];
   for (const service of services) {
-    if (service.hasWeb && service.state === "running") {
-      links.push({
-        url: `https://${service.name}.${baseDomain}`,
-        label: service.name,
-      });
+    if (!service.hasWeb || service.state !== "running") continue;
+    for (const host of service.hosts) {
+      links.push({ url: `https://${host}`, label: service.name });
     }
   }
   return links;

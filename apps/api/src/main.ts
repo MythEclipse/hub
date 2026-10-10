@@ -25,7 +25,6 @@ const useCases = buildUseCases(
   {
     units: MONITORED_UNITS,
     webUnits: WEB_UNITS,
-    baseDomain: env.BASE_DOMAIN,
     staticLinks: [{ url: env.GITHUB_REPO_URL, label: "GitHub" }],
   },
 );

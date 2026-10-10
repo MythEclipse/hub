@@ -14,8 +14,7 @@ const deps = {
     queryRange: async () => [],
   },
   units: ["caddy", "hub"],
-  webUnits: new Set(["hub"]),
-  baseDomain: "example.test",
+  webUnits: new Map([["hub", ["hub.example.test"]]]),
   staticLinks: [],
 };
 
@@ -25,7 +24,7 @@ describe("getOverview", () => {
       ...deps,
       systemd: {
         listServices: async () => [
-          { name: "caddy", state: "running", hasWeb: false },
+          { name: "caddy", state: "running", hasWeb: false, hosts: [] },
         ],
       },
     })();
@@ -59,15 +58,53 @@ describe("getOverview", () => {
       ...deps,
       systemd: {
         listServices: async () => [
-          { name: "hub", state: "running", hasWeb: true },
-          { name: "hub-broken", state: "failed", hasWeb: true },
-          { name: "headless", state: "running", hasWeb: false },
+          {
+            name: "hub",
+            state: "running",
+            hasWeb: true,
+            hosts: ["hub.example.test"],
+          },
+          {
+            name: "hub-broken",
+            state: "failed",
+            hasWeb: true,
+            hosts: ["broken.example.test"],
+          },
+          {
+            name: "headless",
+            state: "running",
+            hasWeb: false,
+            hosts: [],
+          },
         ],
       },
     })();
 
     assert.deepEqual(overview.links, [
       { url: "https://hub.example.test", label: "hub" },
+    ]);
+  });
+
+  it("emits one link per published hostname, not one per unit", async () => {
+    // scraper answers on two domains; guessing the hostname from the unit name
+    // produced a single dead link instead of both real ones.
+    const overview = await makeGetOverview({
+      ...deps,
+      systemd: {
+        listServices: async () => [
+          {
+            name: "scraper",
+            state: "running",
+            hasWeb: true,
+            hosts: ["scraper.example.test", "api.example.test"],
+          },
+        ],
+      },
+    })();
+
+    assert.deepEqual(overview.links, [
+      { url: "https://scraper.example.test", label: "scraper" },
+      { url: "https://api.example.test", label: "scraper" },
     ]);
   });
 
@@ -78,7 +115,9 @@ describe("getOverview", () => {
       systemd: {
         listServices: async () => {
           systemdCalls++;
-          return [{ name: "caddy", state: "running", hasWeb: false }];
+          return [
+            { name: "caddy", state: "running", hasWeb: false, hosts: [] },
+          ];
         },
       },
     });

@@ -10,6 +10,7 @@ export interface SystemdInspector {
   /** Units that do not exist on this host are skipped, not reported as errors. */
   listServices(
     units: readonly string[],
-    webUnits: ReadonlySet<string>,
+    /** Unit name -> public hostnames, for units with a site behind the proxy. */
+    webUnits: ReadonlyMap<string, readonly string[]>,
   ): Promise<Service[]>;
 }

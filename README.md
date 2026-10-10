@@ -100,6 +100,11 @@ Secrets used: `VPS_HOST`, `VPS_USER`, `SSH_PRIVATE_KEY`.
 |---|---|---|
 | `PORT` | `4003` | |
 | `PROMETHEUS_URL` | `http://127.0.0.1:9090` | |
-| `BASE_DOMAIN` | `asepharyana.my.id` | used to build service links |
 | `WEB_DIST_PATH` | — | set in production; omit for API-only |
 | `VITE_API_URL` | — | only when the SPA and API are on different origins |
+
+Service links are not configurable by env: each unit maps to the hostnames
+Caddy actually publishes it on, in `WEB_UNITS` in
+`apps/api/src/infrastructure/systemd/systemd-inspector.ts`. The hostname is
+usually not the unit name (`pr-agent-server` is served at `pr-agent`), so it
+is listed explicitly rather than composed from a base domain.

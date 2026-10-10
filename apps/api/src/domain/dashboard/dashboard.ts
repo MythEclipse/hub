@@ -10,6 +10,12 @@ export interface Service {
   name: string;
   state: string;
   hasWeb: boolean;
+  /**
+   * Hostnames this service is published on, empty when it has no public site.
+   * Explicit rather than composed from the unit name: the Caddy hostname is
+   * often not the unit name.
+   */
+  hosts: readonly string[];
 }
 
 export interface Trace {

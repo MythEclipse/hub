@@ -39,14 +39,22 @@ ActiveState=inactive
 `;
 
 describe("parseSystemctlShow", () => {
-  const webUnits = new Set(["caddy", "idle"]);
+  const webUnits = new Map([
+    ["caddy", ["caddy.example.test"]],
+    ["idle", ["idle.example.test"]],
+  ]);
 
   it("maps active to running and reads hasWeb from webUnits", () => {
     const caddy = parseSystemctlShow(FIXTURE, webUnits).find(
       (s) => s.name === "caddy",
     );
 
-    assert.deepEqual(caddy, { name: "caddy", state: "running", hasWeb: true });
+    assert.deepEqual(caddy, {
+      name: "caddy",
+      state: "running",
+      hasWeb: true,
+      hosts: ["caddy.example.test"],
+    });
   });
 
   it("skips units that are not installed on this host", () => {
@@ -103,11 +111,13 @@ describe("parseSystemctlShow", () => {
 });
 
 describe("listServices against the live systemctl", () => {
+  const noWebUnits: ReadonlyMap<string, readonly string[]> = new Map();
+
   it("yields no service for a unit that is not installed", async () => {
     const { listServices } = createSystemdInspector();
     const services = await listServices(
       ["definitely-not-a-real-unit-xyz"],
-      new Set(),
+      noWebUnits,
     );
 
     assert.deepEqual(services, []);
@@ -116,7 +126,9 @@ describe("listServices against the live systemctl", () => {
   it("returns at most one entry per requested unit, installed or not", async () => {
     const { listServices } = createSystemdInspector();
     const requested = ["definitely-not-a-real-unit-xyz", "another-fake-unit"];
-    const names = (await listServices(requested, new Set())).map((s) => s.name);
+    const names = (await listServices(requested, noWebUnits)).map(
+      (s) => s.name,
+    );
 
     assert.equal(new Set(names).size, names.length, "no duplicate entries");
     for (const name of names) {
@@ -131,7 +143,7 @@ describe("listServices against the live systemctl", () => {
     const requested = ["caddy", "hub", "prometheus"];
 
     const services = await withShadowedSystemctl(() =>
-      listServices(requested, new Set(["hub"])),
+      listServices(requested, new Map([["hub", ["hub.example.test"]]])),
     );
 
     assert.deepEqual(services, [], "unavailable systemd means no services");

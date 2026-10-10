@@ -8,43 +8,68 @@ const execFileAsync = promisify(execFile);
 /**
  * Service-owning systemd units shown on the dashboard. GMW, Booster and friends
  * are listed even though they are headless (no public web endpoint).
+ *
+ * Kept in sync with the host by hand — every name here is a real unit on
+ * host1760805970. Anything not installed is skipped at read time rather than
+ * reported as degraded, so a stale entry here costs nothing but a stale
+ * entry in the source list.
  */
 export const MONITORED_UNITS = [
-  "caddy",
   "9router",
   "booster-role",
+  "caddy",
+  "flowsight",
   "gmw-backend",
-  "gmw-discord-gateway",
+  "gmw-frontend",
+  "gmw-proxy",
+  "hermyhq",
+  "hermyhq-render",
+  "hindsight",
+  "hindsight-gate",
+  "hindsight-ui",
   "hub",
-  "lidm-backend",
-  "lidm-frontend",
-  "llm-api",
-  "nats",
+  "mcpedia-api",
+  "mcpedia-mcp",
+  "mcpedia-web",
+  "mcpedia-worker",
   "node-exporter",
   "otel",
+  "pg-internal",
   "pr-agent-server",
   "prometheus",
+  "qdrant-internal",
+  "redis-internal",
   "scraper",
   "teleuploader",
-  "tools-frontend",
-  "tools-gateway",
-  "tools-workers",
   "zeavis-api",
   "zeavis-ml-service",
   "zeavis-web",
 ] as const;
 
-/** Units with a public HTTPS site behind Caddy. */
-export const WEB_UNITS: ReadonlySet<string> = new Set([
-  "caddy",
-  "9router",
-  "hub",
-  "lidm-frontend",
-  "pr-agent-server",
-  "scraper",
-  "teleuploader",
-  "tools-frontend",
-  "zeavis-web",
+/**
+ * Units with a public HTTPS site, mapped to the hostnames Caddy actually
+ * serves them on.
+ *
+ * This is an explicit map, not a derived name, because the hostname is not the
+ * unit name: `scraper` is served at both scraper.asepharyana.my.id and
+ * api.asepharyana.my.id, while `pr-agent-server` is published as pr-agent and
+ * `mcpedia-web` as wiki. Composing `https://<unit>.<domain>` produced links to
+ * names that resolve nowhere — for 9router, hermyhq and zeavis-web it guessed
+ * right by coincidence and nothing else.
+ *
+ * Verified against the site blocks in /etc/caddy/Caddyfile.
+ */
+export const WEB_UNITS: ReadonlyMap<string, readonly string[]> = new Map([
+  ["9router", ["9router.asepharyana.my.id"]],
+  ["caddy", ["asepharyana.my.id"]],
+  ["gmw-proxy", ["gmw.asepharyana.my.id"]],
+  ["hermyhq", ["hamc.asepharyana.my.id"]],
+  ["hub", ["hub.asepharyana.my.id", "asepharyana.my.id"]],
+  ["mcpedia-web", ["mcpedia.asepharyana.my.id", "wiki.asepharyana.my.id"]],
+  ["pr-agent-server", ["pr-agent.asepharyana.my.id"]],
+  ["scraper", ["scraper.asepharyana.my.id", "api.asepharyana.my.id"]],
+  ["teleuploader", ["upload.asepharyana.my.id"]],
+  ["zeavis-web", ["zeavisedu.asepharyana.my.id"]],
 ]);
 
 /**
@@ -58,7 +83,7 @@ export const WEB_UNITS: ReadonlySet<string> = new Set([
  */
 export function parseSystemctlShow(
   stdout: string,
-  webUnits: ReadonlySet<string>,
+  webUnits: ReadonlyMap<string, readonly string[]>,
 ): Service[] {
   const services: Service[] = [];
 
@@ -75,10 +100,12 @@ export function parseSystemctlShow(
     if (loadState === "not-found") continue;
 
     const name = id.replace(/\.service$/, "");
+    const hosts = webUnits.get(name) ?? [];
     services.push({
       name,
       state: state === "active" ? "running" : state,
-      hasWeb: webUnits.has(name),
+      hasWeb: hosts.length > 0,
+      hosts,
     });
   }
 

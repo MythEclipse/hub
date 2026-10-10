@@ -4,10 +4,7 @@ import {
 } from "./dashboard/get-overview.ts";
 
 export interface Dependencies
-  extends Omit<
-    GetOverviewDeps,
-    "units" | "webUnits" | "baseDomain" | "staticLinks"
-  > {}
+  extends Omit<GetOverviewDeps, "units" | "webUnits" | "staticLinks"> {}
 
 export interface UseCases {
   dashboard: {
