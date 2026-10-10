@@ -1,0 +1,9 @@
+$schema: https://moonrepo.dev/schemas/workspace.json
+
+projects:
+  globs:
+    - "apps/*"
+
+vcs:
+  defaultBranch: "main"
+  client: "git"

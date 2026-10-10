@@ -1,0 +1,43 @@
+$schema: https://moonrepo.dev/schemas/project.json
+
+language: "typescript"
+
+tasks:
+  dev:
+    command: "pnpm run dev"
+    preset: "server"
+    deps:
+      - "api:dev"
+
+  build:
+    command: "pnpm run build"
+    # public/** is copied verbatim into dist/ and the lockfile/package.json
+    # change the deps, but both were invisible to the hash — so a favicon
+    # change or a dependency bump rebuilt nothing and shipped the previous
+    # bundle. Verified: appending a byte to public/favicon.ico left dist stale.
+    inputs:
+      - "src/**/*"
+      - "public/**/*"
+      - "tsconfig.json"
+      - "vite.config.ts"
+      - "index.html"
+      - "package.json"
+      # Root manifests via fileGroup: project inputs reject `../` traversal, so
+      # the lockfile cannot be named directly from apps/web/moon.yml.
+      - "@rootManifests(package.json)"
+      - "@rootManifests(pnpm-lock.yaml)"
+    outputs:
+      - "dist/**/*"
+
+  typecheck:
+    command: "pnpm run typecheck"
+    inputs:
+      - "src/**/*"
+      - "tsconfig.json"
+
+  test:
+    command: "pnpm run test"
+    inputs:
+      - "src/**/*"
+      - "tsconfig.json"
+      - "package.json"

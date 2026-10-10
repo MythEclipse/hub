@@ -1,0 +1,59 @@
+$schema: https://moonrepo.dev/schemas/tasks.json
+
+# Root manifests a project build depends on. Project task inputs reject `../`
+# traversal, so this is the only way for apps/web:build to notice a dependency
+# change and invalidate its cache — otherwise a bumped dependency rebuilds
+# nothing and the previous bundle ships.
+fileGroups:
+  rootManifests:
+    - "package.json"
+    - "pnpm-lock.yaml"
+    - "pnpm-workspace.yaml"
+
+tasks:
+  check:
+    group: lint
+    description: "Run Biome checks and TypeScript typecheck."
+    inputs:
+      - "@globs(sources)"
+      - "@globs(tsconfig)"
+    outputs:
+      - ".reports/**/*"
+    command: |
+      pnpm run lint
+      pnpm run typecheck
+    cache: false
+
+  lint:
+    group: lint
+    description: "Run Biome checks."
+    inputs:
+      - "@globs(sources)"
+      - "@globs(tsconfig)"
+    outputs:
+      - ".reports/**/*"
+    command: "pnpm run lint"
+    cache: false
+
+  format:
+    group: codegen
+    description: "Format the repository with Biome."
+    inputs:
+      - "@globs(sources)"
+    outputs:
+      - ".reports/**/*"
+    command: "pnpm run format"
+    cache: false
+
+  build:
+    group: build
+    description: "Build all projects."
+    dependsOn:
+      - "^build"
+    inputs:
+      - "@globs(sources)"
+      - "@globs(tsconfig)"
+      - "@globs(package.json)"
+    outputs:
+      - "@globs(dest)"
+    command: "pnpm run build"

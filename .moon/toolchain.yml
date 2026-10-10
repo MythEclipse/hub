@@ -1,0 +1,12 @@
+$schema: https://moonrepo.dev/schemas/toolchain.json
+
+# "system" keeps moon from downloading and pinning a toolchain during a
+# deploy: the VPS already provides node and pnpm, and a mid-deploy network
+# fetch with no timeout is a needless failure mode.
+node:
+  version: "system"
+  addVersionFile: false
+
+pnpm:
+  version: "system"
+  addVersionFile: false

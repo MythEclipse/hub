@@ -26,21 +26,22 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: pnpm
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Pre-existing Biome failures at the bun -> pnpm migration baseline
-      # (51 errors: import ordering + unused vars). Reported, but it must not
-      # block a deploy; typecheck + build below are the gate.
+      # Lint is clean as of the monorepo migration (biome.json schema bump +
+      # css.parser.tailwindDirectives), so it gates the deploy like the rest.
       - name: Lint
         run: pnpm run lint
-        continue-on-error: true
 
       - name: Typecheck
         run: pnpm run typecheck
+
+      - name: Test
+        run: pnpm run test
 
       - name: Build
         run: pnpm run build

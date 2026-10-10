@@ -115,7 +115,10 @@ trap 'on_error $LINENO' ERR
 
 health_check() {
   log "health-check $HEALTH_URL"
-  curl --fail --silent --show-error \
+  # curl's --max-time caps EACH attempt, not the whole sequence, so without
+  # the outer timeout the worst case was 15 x (10s + 2s) ~= 3 minutes before
+  # rollback. 60s is generous for a node process that is already listening.
+  timeout 60 curl --fail --silent --show-error \
     --retry 15 --retry-delay 2 \
     --retry-connrefused --retry-all-errors \
     --max-time 10 \
@@ -161,7 +164,7 @@ fi
 
 # ── 2. install + build ─────────────────────────────────────────────────────
 # NODE_ENV must NOT be production here: pnpm would then skip devDependencies
-# (typescript, tailwind, biome) and `next build` would fail.
+# (typescript, tailwind, biome) and the build would fail.
 (
   cd "$RELEASE_DIR"
   unset NODE_ENV
@@ -170,9 +173,28 @@ fi
   log "pnpm build"
   $PNPM run build
 )
-[ -d "$RELEASE_DIR/.next" ] || die "build produced no .next output"
+
+# Assert the real entrypoints, not just the dist directories: a partial build
+# that produced *something* would otherwise pass here and only surface as a
+# failed health check after the symlink is already flipped.
+[ -f "$RELEASE_DIR/apps/api/dist/main.js" ] \
+  || die "build produced no apps/api/dist/main.js"
+[ -f "$RELEASE_DIR/apps/web/dist/index.html" ] \
+  || die "build produced no apps/web/dist/index.html"
 
 # ── 3. activate ────────────────────────────────────────────────────────────
+# Preflight: a systemd unit left over from the previous (Next.js) release would
+# keep starting `pnpm start` and silently serve the old build while this script
+# reports success. Checking now means we die with ACTIVATED=0 — no symlink flip,
+# no restart, no rollback. Skip with SKIP_RESTART=1 for verification runs.
+if [ "$SKIP_RESTART" != "1" ] && command -v systemctl >/dev/null 2>&1; then
+  unit_exec="$(as_root systemctl show "$UNIT" -p ExecStart --value 2>/dev/null || true)"
+  case "$unit_exec" in
+    *apps/api/dist/main.js*) ;;
+    *) die "unit $UNIT ExecStart is stale (expected apps/api/dist/main.js): ${unit_exec:-<unknown>}. Update the unit from deploy/hub.service." ;;
+  esac
+fi
+
 log "activating $RELEASE_DIR"
 NEW_LINK="${CURRENT_LINK}.new.$$"
 as_root ln -sfn "$RELEASE_DIR" "$NEW_LINK"

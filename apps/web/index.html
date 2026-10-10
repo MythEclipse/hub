@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en" class="h-full">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Asep Haryana Saputra</title>
+    <meta
+      name="description"
+      content="Teknik Informatika student exploring backend, infrastructure & DevOps — portfolio and projects by Asep Haryana Saputra."
+    />
+    <script>
+      // Applies the stored theme before first paint. Without this the class
+      // only lands in a React effect and dark-mode visitors get a full
+      // light-theme flash on every load. Mirrors next-themes' own script.
+      (function () {
+        try {
+          var stored = localStorage.getItem("theme");
+          var dark =
+            stored === "dark" ||
+            (!stored &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches);
+          if (dark) document.documentElement.classList.add("dark");
+        } catch (e) {
+          /* localStorage unavailable — fall back to the light theme */
+        }
+      })();
+    </script>
+  </head>
+  <body class="min-h-full">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

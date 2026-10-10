@@ -1,0 +1,25 @@
+[Unit]
+Description=Hub — personal portfolio SPA + infrastructure API
+Documentation=https://github.com/asepharyana/hub
+After=network-online.target prometheus.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+# The symlink, not a pinned release path: the deploy flips
+# /opt/hub/current atomically, so code and static assets swap together and
+# WEB_DIST_PATH resolves through the same switch.
+WorkingDirectory=/opt/hub/current
+EnvironmentFile=-/opt/hub/current/.env
+Environment=NODE_ENV=production
+Environment=PORT=4003
+# apps/api/dist/main.js — tsup emits .js because apps/api sets "type":"module".
+ExecStart=/usr/bin/node apps/api/dist/main.js
+Restart=on-failure
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=hub
+
+[Install]
+WantedBy=multi-user.target
