@@ -47,11 +47,49 @@ export const WEB_UNITS: ReadonlySet<string> = new Set([
   "zeavis-web",
 ]);
 
+/**
+ * Parses the block-per-unit output of
+ * `systemctl show a.service b.service -p Id -p ActiveState -p LoadState`.
+ *
+ * Pure and exported so it can be tested against fixture output. The bugs this
+ * guards are invisible on a CI runner, where none of the monitored units are
+ * installed, so a test that shells out to the real systemctl proves nothing
+ * off-host.
+ */
+export function parseSystemctlShow(
+  stdout: string,
+  webUnits: ReadonlySet<string>,
+): Service[] {
+  const services: Service[] = [];
+
+  for (const block of stdout.split("\n\n")) {
+    const id = block.match(/^Id=(\S+)/m)?.[1];
+    const loadState = block.match(/^LoadState=(\S+)/m)?.[1];
+    const state = block.match(/^ActiveState=(\w+)/m)?.[1];
+    if (!id || !state) continue;
+
+    // `systemctl show` exits 0 even for a unit that does not exist, so nothing
+    // throws — it reports LoadState=not-found instead. Without this check every
+    // unit missing on the host is counted as a degraded service, inflating the
+    // "N degraded" badge and skewing the donut.
+    if (loadState === "not-found") continue;
+
+    const name = id.replace(/\.service$/, "");
+    services.push({
+      name,
+      state: state === "active" ? "running" : state,
+      hasWeb: webUnits.has(name),
+    });
+  }
+
+  return services;
+}
+
 export function createSystemdInspector(): SystemdInspector {
   return {
     async listServices(units, webUnits): Promise<Service[]> {
-      const services: Service[] = [];
-
+      // One call for every unit instead of one per unit: 22 execFile spawns
+      // become 1, which is the bulk of the overview request's latency.
       const { stdout } = await execFileAsync(
         "systemctl",
         [
@@ -69,30 +107,13 @@ export function createSystemdInspector(): SystemdInspector {
         // and the 15s dashboard poll piles up behind it. Prometheus has
         // AbortSignal.timeout(5000); systemd had nothing.
         { timeout: 2000, maxBuffer: 1024 * 1024 },
-      );
+      ).catch(() => ({ stdout: "" }));
 
-      // One call for every unit instead of one per unit: 22 execFile spawns
-      // become 1, which is the bulk of the overview request's latency.
-      for (const block of stdout.split("\n\n")) {
-        const id = block.match(/^Id=(\S+)/m)?.[1];
-        const loadState = block.match(/^LoadState=(\S+)/m)?.[1];
-        const state = block.match(/^ActiveState=(\w+)/m)?.[1];
-        if (!id || !state) continue;
-
-        // `systemctl show` exits 0 even for a unit that does not exist, so this
-        // never throws — it reports LoadState=not-found instead. Without the
-        // check, every unit missing on this host is counted as a degraded
-        // service, inflating the "N degraded" badge and skewing the donut.
-        if (loadState === "not-found") continue;
-
-        services.push({
-          name: id.replace(/\.service$/, ""),
-          state: state === "active" ? "running" : state,
-          hasWeb: webUnits.has(id.replace(/\.service$/, "")),
-        });
-      }
-
-      return services;
+      // systemd being unavailable entirely (no systemd, no D-Bus, container
+      // without it) degrades to an empty list rather than throwing: one dead
+      // dependency must not take down the CPU, memory and LLM numbers with
+      // it. That matches how a failed Prometheus scrape degrades to null.
+      return parseSystemctlShow(stdout, webUnits);
     },
   };
 }
