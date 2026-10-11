@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  countDegraded,
   fmtBytes,
   fmtUptime,
   gaugeTone,
+  isDegraded,
   reading,
   safeDur,
   serviceTone,
@@ -39,17 +41,153 @@ describe("gaugeTone", () => {
 });
 
 describe("serviceTone", () => {
-  it("marks only running services as passing", () => {
-    assert.equal(serviceTone("running"), "pass");
-    assert.notEqual(serviceTone("failed"), "pass");
+  const unit = (
+    state: string,
+    kind: "running" | "oneshot",
+    result = "success",
+  ) => ({ state, kind, result });
+
+  it("marks a running service as passing", () => {
+    assert.equal(serviceTone(unit("running", "running")), "pass");
+    assert.equal(serviceTone(unit("failed", "running", "exit-code")), "fail");
   });
 
-  it("treats every non-running state as the same finding", () => {
+  it("treats every non-running daemon as the same finding", () => {
     // An unreachable or failed unit is one thing to a reader scanning a
     // column; splitting it into several colours would make the column harder
     // to read, not easier.
-    assert.equal(serviceTone("failed"), serviceTone("activating"));
-    assert.equal(serviceTone("failed"), serviceTone("deactivating"));
+    assert.equal(
+      serviceTone(unit("failed", "running", "exit-code")),
+      serviceTone(unit("activating", "running", "exit-code")),
+    );
+    assert.equal(
+      serviceTone(unit("failed", "running", "exit-code")),
+      serviceTone(unit("deactivating", "running", "exit-code")),
+    );
+  });
+
+  it("does not paint a completed oneshot as a fault", () => {
+    // The row mark and the degraded counter are the same question; this is
+    // where the oneshot defect was visible as a red row beside a green tally.
+    assert.equal(serviceTone(unit("inactive", "oneshot")), "pass");
+    assert.equal(serviceTone(unit("inactive", "oneshot", "exit-code")), "fail");
+  });
+});
+
+describe("isDegraded", () => {
+  const unit = (
+    name: string,
+    state: string,
+    kind: "running" | "oneshot",
+    result = "success",
+  ) => ({ name, state, kind, result, hasWeb: false, hosts: [] });
+
+  /**
+   * The defect. Three healthy timer-driven jobs were reported as degraded on
+   * every poll, because a `Type=oneshot` unit rests in `inactive` by design and
+   * the dashboard read that as "not running".
+   */
+  it("does not degrade a oneshot that completed successfully", () => {
+    assert.equal(
+      isDegraded(unit("certbot-renew", "inactive", "oneshot")),
+      false,
+      "a finished certbot renewal is not a fault",
+    );
+    assert.equal(
+      isDegraded(unit("pr-agent-worker", "inactive", "oneshot")),
+      false,
+    );
+  });
+
+  it("does degrade a oneshot whose last run failed", () => {
+    // Inactive is fine; a non-success Result is the actual fault, and it is
+    // what makes the difference between "done" and "broken".
+    assert.equal(
+      isDegraded(unit("pr-agent-worker", "inactive", "oneshot", "exit-code")),
+      true,
+    );
+  });
+
+  it("still degrades a daemon that is not running", () => {
+    // For a daemon, inactive is not a resting state — it is an outage.
+    assert.equal(isDegraded(unit("hub", "inactive", "running")), true);
+    assert.equal(isDegraded(unit("scraper", "failed", "running")), true);
+  });
+
+  it("does not degrade a running daemon", () => {
+    assert.equal(isDegraded(unit("hub", "running", "running")), false);
+  });
+
+  it("treats an unknown result as a fault rather than excusing it", () => {
+    // Fail closed: a unit we cannot judge must not be counted as healthy.
+    assert.equal(
+      isDegraded(unit("mystery", "running", "running", "unknown")),
+      true,
+    );
+  });
+});
+
+describe("countDegraded", () => {
+  it("counts only real faults across a mixed host", () => {
+    const services = [
+      {
+        name: "hub",
+        state: "running",
+        kind: "running" as const,
+        result: "success",
+        hasWeb: true,
+        hosts: [],
+      },
+      {
+        name: "certbot-renew",
+        state: "inactive",
+        kind: "oneshot" as const,
+        result: "success",
+        hasWeb: false,
+        hosts: [],
+      },
+      {
+        name: "pr-agent-worker",
+        state: "inactive",
+        kind: "oneshot" as const,
+        result: "success",
+        hasWeb: false,
+        hosts: [],
+      },
+      {
+        name: "scraper",
+        state: "failed",
+        kind: "running" as const,
+        result: "exit-code",
+        hasWeb: false,
+        hosts: [],
+      },
+    ];
+
+    assert.equal(countDegraded(services), 1, "only the crashed daemon");
+  });
+
+  it("counts nothing for a wholly healthy host", () => {
+    const services = [
+      {
+        name: "hub",
+        state: "running",
+        kind: "running" as const,
+        result: "success",
+        hasWeb: true,
+        hosts: [],
+      },
+      {
+        name: "certbot-renew",
+        state: "inactive",
+        kind: "oneshot" as const,
+        result: "success",
+        hasWeb: false,
+        hosts: [],
+      },
+    ];
+
+    assert.equal(countDegraded(services), 0);
   });
 });
 

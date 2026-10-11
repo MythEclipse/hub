@@ -174,6 +174,32 @@ export function listeningPorts(ssOutput: string): readonly number[] {
 }
 
 /**
+ * What kind of unit this is, and how its last run ended.
+ *
+ * `ActiveState` alone cannot tell a finished job from a dead daemon: a oneshot
+ * unit returns to `inactive` by design, exactly as a `Type=simple` unit does
+ * after crashing. Reading `state !== "running"` therefore alarmed at three
+ * healthy timer-driven jobs on every poll.
+ *
+ * `Result` is the field that disambiguates. It is `success` after a oneshot
+ * completes and `exit-code`/`signal`/`timeout` when it genuinely failed, and it
+ * is reset on every start, so it always describes the most recent run.
+ *
+ * An unreadable `Type` fails closed to `running`: a daemon wrongly excused as a
+ * job is a worse error than a job wrongly reported as degraded.
+ */
+export function unitOutcome(block: string): {
+  kind: "running" | "oneshot";
+  result: string;
+} {
+  const type = /^Type=(\S+)/m.exec(block)?.[1];
+  return {
+    kind: type === "oneshot" ? "oneshot" : "running",
+    result: /^Result=(\S+)/m.exec(block)?.[1] ?? "unknown",
+  };
+}
+
+/**
  * True when a unit's program is genuinely gone from disk.
  *
  * The ENOENT/EACCES split is the entire point. This process runs as the unprivileged
@@ -208,6 +234,10 @@ async function showUnits(units: readonly string[]): Promise<string> {
         "ActiveState",
         "-p",
         "LoadState",
+        "-p",
+        "Type",
+        "-p",
+        "Result",
         "-p",
         "ExecStart",
         "-p",
@@ -317,6 +347,10 @@ function liveHostnames(
 export interface DiscoveredService {
   name: string;
   state: string;
+  /** "running" for a daemon, "oneshot" for a job that finishes and exits. */
+  kind: "running" | "oneshot";
+  /** Outcome of the most recent run: success, exit-code, signal, timeout… */
+  result: string;
   /** False when the unit file survived but the program it runs did not. */
   installed: boolean;
   /** Ports the unit declares, ascending. */
@@ -379,6 +413,7 @@ export async function discoverServices(): Promise<DiscoveredService[]> {
     if (isUninstalled(execEntryPoint(block))) continue;
 
     const state = /^ActiveState=(\w+)/m.exec(block)?.[1] ?? "unknown";
+    const { kind, result } = unitOutcome(block);
     const declared = declaredListenPorts(block);
     const override = overrides.get(name);
     // The declared port wins when there is one, so a unit whose ExecStart
@@ -388,6 +423,8 @@ export async function discoverServices(): Promise<DiscoveredService[]> {
     services.push({
       name,
       state: state === "active" ? "running" : state,
+      kind,
+      result,
       installed: true,
       ports,
       // Only a port that is accepting right now can have a live site behind it.

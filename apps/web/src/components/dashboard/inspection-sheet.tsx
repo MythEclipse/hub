@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { FieldLabel, Stamp } from "#/components/ui/form-primitives";
 import {
+  countDegraded,
   fmtUptime,
   gaugeTone,
   reading,
@@ -40,8 +41,9 @@ export function InspectionSheet() {
   );
 
   const services = data?.services ?? [];
-  const running = services.filter((s) => s.state === "running").length;
-  const degraded = services.length - running;
+  // A oneshot rests in `inactive` by design, so counting `state !== "running"`
+  // reported three healthy timer-driven jobs as degraded on every poll.
+  const degraded = countDegraded(services);
 
   const verdict = sheetVerdict(
     {
@@ -220,9 +222,15 @@ function Reading({
 function ServiceRow({
   service,
 }: {
-  service: { name: string; state: string; hosts: readonly string[] };
+  service: {
+    name: string;
+    state: string;
+    kind: "running" | "oneshot";
+    result: string;
+    hosts: readonly string[];
+  };
 }) {
-  const tone = serviceTone(service.state);
+  const tone = serviceTone(service);
   const { t } = useI18n();
 
   return (
@@ -234,8 +242,12 @@ function ServiceRow({
       <span
         className={`reading w-[92px] shrink-0 text-[10px] ${TONE_CLASS[tone]}`}
       >
+        {/* A oneshot rests inactive; saying so reads as a fault even when the
+            mark is green, so it is named for what it is. */}
         {tone === "pass"
-          ? t.status.running
+          ? service.kind === "oneshot"
+            ? t.status.completed
+            : t.status.running
           : (service.state ?? t.status.unknown)}
       </span>
 

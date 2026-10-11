@@ -44,6 +44,7 @@ export const en = {
     pending: "PENDING",
     noData: "NO DATA",
     running: "running",
+    completed: "completed",
     degraded: "degraded",
     down: "down",
     unknown: "unknown",

@@ -22,7 +22,14 @@ describe("getOverview", () => {
       ...deps,
       systemd: {
         listServices: async () => [
-          { name: "caddy", state: "running", hasWeb: false, hosts: [] },
+          {
+            name: "caddy",
+            state: "running",
+            kind: "running",
+            result: "success",
+            hasWeb: false,
+            hosts: [],
+          },
         ],
       },
     })();
@@ -62,18 +69,24 @@ describe("getOverview", () => {
           {
             name: "hub",
             state: "running",
+            kind: "running",
+            result: "success",
             hasWeb: true,
             hosts: ["hub.example.test"],
           },
           {
             name: "hub-broken",
             state: "failed",
+            kind: "running",
+            result: "exit-code",
             hasWeb: true,
             hosts: ["broken.example.test"],
           },
           {
             name: "headless",
             state: "running",
+            kind: "running",
+            result: "success",
             hasWeb: false,
             hosts: [],
           },
@@ -96,6 +109,8 @@ describe("getOverview", () => {
           {
             name: "scraper",
             state: "running",
+            kind: "running",
+            result: "success",
             hasWeb: true,
             hosts: ["scraper.example.test", "api.example.test"],
           },
@@ -117,7 +132,14 @@ describe("getOverview", () => {
         listServices: async () => {
           systemdCalls++;
           return [
-            { name: "caddy", state: "running", hasWeb: false, hosts: [] },
+            {
+              name: "caddy",
+              state: "running",
+              kind: "running",
+              result: "success",
+              hasWeb: false,
+              hosts: [],
+            },
           ];
         },
       },

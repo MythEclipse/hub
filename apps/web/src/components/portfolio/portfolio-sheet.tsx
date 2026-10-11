@@ -7,6 +7,7 @@ import {
   Mail,
 } from "lucide-react";
 import { CheckMark, FieldLabel, Stamp } from "#/components/ui/form-primitives";
+import { isDegraded } from "#/lib/dashboard/format";
 import { interpolate } from "#/lib/i18n";
 import { useI18n, useLocalePath } from "#/lib/i18n/context";
 import { projects } from "#/lib/projects";
@@ -25,7 +26,10 @@ export function PortfolioSheet() {
     refetchInterval: POLL_INTERVAL_MS,
   });
 
-  const running = data?.services.filter((s) => s.state === "running").length;
+  // "Passing", not "running": a Type=oneshot job finishes and rests inactive by
+  // design, so counting `state === "running"` understated this host by three
+  // healthy timer-driven jobs and tinted the tally as a partial failure.
+  const healthy = data?.services.filter((s) => !isDegraded(s)).length;
   const total = data?.services.length;
   const checkedAt = new Date().toLocaleTimeString(
     locale === "id" ? "id-ID" : "en-GB",
@@ -122,10 +126,10 @@ export function PortfolioSheet() {
               <>
                 <p
                   className={`reading text-[13px] font-bold ${
-                    running === total ? "text-pass" : "text-pending"
+                    healthy === total ? "text-pass" : "text-pending"
                   }`}
                 >
-                  {running ?? 0} / {total}
+                  {healthy ?? 0} / {total}
                 </p>
                 <p className="mt-1 font-mono text-[9px] text-ink-faint">
                   {t.status.unitSuffix}

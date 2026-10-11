@@ -9,6 +9,14 @@
 export interface Service {
   name: string;
   state: string;
+  /**
+   * "running" for a daemon, "oneshot" for a job that finishes and goes back to
+   * inactive. A oneshot's resting state is `inactive` by design, so `state`
+   * alone would report three healthy timer-driven jobs as degraded.
+   */
+  kind: "running" | "oneshot";
+  /** Outcome of the most recent run: `success`, `exit-code`, `signal`, … */
+  result: string;
   hasWeb: boolean;
   /**
    * Hostnames this service is published on, empty when it has no public site.

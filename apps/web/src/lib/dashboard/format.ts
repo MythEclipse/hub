@@ -1,3 +1,15 @@
+import type { Service } from "#api/domain/dashboard/dashboard.ts";
+
+/**
+ * The three fields that decide whether a unit is in a fault.
+ *
+ * Named rather than inlined so `isDegraded` and `serviceTone` cannot drift
+ * apart: both are the same question asked at two different scales, and the
+ * defect this module guards against started precisely because the row and the
+ * counter each answered it separately.
+ */
+export type ServiceState = Pick<Service, "state" | "kind" | "result">;
+
 /**
  * Presentation helpers for the inspection sheet.
  *
@@ -40,8 +52,32 @@ export function gaugeTone(v: number | null): Tone {
  * failed unit is one finding to a reader scanning a column, and splitting it
  * into several colours would make the column harder to read, not easier.
  */
-export function serviceTone(state: string): Tone {
-  return state === "running" ? "pass" : "fail";
+export function serviceTone(unit: ServiceState): Tone {
+  // A oneshot that completed is not a fault even though it rests inactive, so
+  // the tone follows `isDegraded` rather than the state string alone.
+  return isDegraded(unit) ? "fail" : "pass";
+}
+
+/**
+ * Whether a unit is a fault, per the state systemd reports.
+ *
+ * The bug this exists to prevent: reading `state !== "running"` counted every
+ * `Type=oneshot` unit as degraded. A oneshot returns to `inactive` by design —
+ * certbot-renew, pr-agent-worker and pr-agent-sync-hooks are all oneshot, all
+ * timer-driven, all succeeding, and all showed as failures on every poll.
+ *
+ * A oneshot passes when its last run succeeded and fails when it did not. A
+ * daemon fails whenever it is not running, because for a daemon `inactive` is
+ * not a resting state, it is an outage.
+ */
+export function isDegraded(unit: ServiceState): boolean {
+  if (unit.result !== "success") return true;
+  return unit.kind === "oneshot" ? false : unit.state !== "running";
+}
+
+/** Number of units in a fault. The number a reader should act on. */
+export function countDegraded(services: readonly Service[]): number {
+  return services.filter(isDegraded).length;
 }
 
 export function fmtUptime(seconds: number): string {

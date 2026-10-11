@@ -8,6 +8,7 @@ import {
   listeningPorts,
   parsePortOverrides,
   unitNamesFrom,
+  unitOutcome,
 } from "./unit-discovery.ts";
 
 /**
@@ -225,6 +226,86 @@ describe("listeningPorts", () => {
   it("returns nothing rather than throwing on unusable output", () => {
     assert.deepEqual(listeningPorts(""), []);
     assert.deepEqual(listeningPorts("garbage\n"), []);
+  });
+});
+
+/**
+ * The defect: `Type=oneshot` units were counted as degraded.
+ *
+ * A oneshot unit finishes its work and returns to inactive — that is the
+ * documented end state, not a failure. `certbot-renew`, `pr-agent-worker` and
+ * `pr-agent-sync-hooks` are all oneshot, all timer-driven, all succeeding, and
+ * all reported as "degraded" because the dashboard read `state !== "running"`.
+ *
+ * These two properties are what the UI needs to tell those apart, and neither
+ * exists in `ActiveState` alone.
+ */
+describe("unitOutcome", () => {
+  it("reports a successful oneshot as passed, not degraded", () => {
+    const block = [
+      "Id=certbot-renew.service",
+      "Type=oneshot",
+      "LoadState=loaded",
+      "ActiveState=inactive",
+      "Result=success",
+    ].join("\n");
+
+    assert.deepEqual(unitOutcome(block), {
+      kind: "oneshot",
+      result: "success",
+    });
+  });
+
+  it("reports a failed oneshot as failed", () => {
+    const block = [
+      "Id=pr-agent-worker.service",
+      "Type=oneshot",
+      "LoadState=loaded",
+      "ActiveState=inactive",
+      "Result=exit-code",
+    ].join("\n");
+
+    assert.deepEqual(unitOutcome(block), {
+      kind: "oneshot",
+      result: "exit-code",
+    });
+  });
+
+  it("reports a running service as running", () => {
+    const block = [
+      "Id=hub.service",
+      "Type=simple",
+      "LoadState=loaded",
+      "ActiveState=active",
+      "Result=success",
+    ].join("\n");
+
+    assert.deepEqual(unitOutcome(block), {
+      kind: "running",
+      result: "success",
+    });
+  });
+
+  it("reports a crashed service as running-but-failed", () => {
+    // Type=simple plus ActiveState=failed is a daemon that died, which is a
+    // real fault. It must NOT be excused as "just a oneshot".
+    const block = [
+      "Id=scraper.service",
+      "Type=simple",
+      "LoadState=loaded",
+      "ActiveState=failed",
+      "Result=signal",
+    ].join("\n");
+
+    assert.deepEqual(unitOutcome(block), { kind: "running", result: "signal" });
+  });
+
+  it("treats an unknown Type as a service, never as an excuse", () => {
+    // Missing Type must fail closed: a daemon wrongly excused is worse than a
+    // oneshot wrongly alarmed.
+    const block = "Id=x.service\nActiveState=inactive\n";
+
+    assert.equal(unitOutcome(block).kind, "running");
   });
 });
 

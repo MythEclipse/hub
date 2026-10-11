@@ -45,6 +45,7 @@ export const id = {
     pending: "MENUNGGU",
     noData: "TIDAK ADA DATA",
     running: "berjalan",
+    completed: "selesai",
     degraded: "mengganggu",
     down: "mati",
     unknown: "tidak diketahui",

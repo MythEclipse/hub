@@ -57,6 +57,8 @@ export interface Messages {
     pending: string;
     noData: string;
     running: string;
+    /** A `Type=oneshot` job that completed; it rests inactive by design. */
+    completed: string;
     degraded: string;
     down: string;
     unknown: string;

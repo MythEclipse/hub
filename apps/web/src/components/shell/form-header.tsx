@@ -11,6 +11,7 @@ const TONE_CLASS = {
   none: "text-ink-faint",
 } as const;
 
+import { countDegraded } from "#/lib/dashboard/format";
 import { sheetVerdict } from "#/lib/dashboard/verdict";
 import { orpc } from "#/libs/orpc/client";
 
@@ -38,8 +39,7 @@ export function FormHeader() {
   });
 
   const total = data?.services.length ?? 0;
-  const degraded =
-    data?.services.filter((s) => s.state !== "running").length ?? 0;
+  const degraded = countDegraded(data?.services ?? []);
 
   useEffect(() => {
     const tick = () =>
