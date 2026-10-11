@@ -57,9 +57,9 @@ export const id = {
   },
   about: {
     heading: "PROFIL",
-    p1: "Saya membangun service backend beserta infrastruktur yang menjalankannya: skema PostgreSQL, unit systemd, dan jalur deploy yang membawa commit ke server tanpa langkah manual.",
-    p2: "Yang membedakan: infrastruktur ini saya jalankan sendiri, bukan artifact yang saya serahkan ke tim ops. Kalau ada klaim di atas yang mati, saya tahu penyebabnya karena saya yang mengubahnya.",
-    p3: 'Untuk konteks: saya mengerjakan bagian backend dari capstone ZeaVis Edu ("AI for Smart Education" oleh Pijak × IBM SkillsBuild) — arsitektur, API, dan deployment.',
+    p1: "Saya membangun service backend dan infrastruktur yang menjalankannya: skema basis data, unit systemd, dan jalur deploy yang membawa commit ke server tanpa langkah manual. Bahasa dan framework-nya berganti-ganti dari proyek ke proyek; yang biasanya saya kerjakan justru jalur di antaranya.",
+    p2: "Yang membedakan: infrastruktur ini saya jalankan sendiri, bukan artefak yang saya serahkan ke tim ops. Setiap klaim di halaman ini menunjuk sesuatu yang benar-benar hidup, dan kalau ada yang mati saya tahu penyebabnya karena saya yang mengubahnya.",
+    p3: "Untuk konteks: saya sudah membawa produk dari awal sampai akhir — arsitektur, API, sampai deployment — mulai dari proyek kampus, ZeaVis Edu, yang masih ada di daftar di atas.",
   },
   ledger: {
     count:
