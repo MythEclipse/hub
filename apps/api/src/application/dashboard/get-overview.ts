@@ -12,10 +12,6 @@ import type { SystemdInspector } from "../../domain/ports/systemd.ts";
 export interface GetOverviewDeps {
   systemd: SystemdInspector;
   prometheus: PrometheusClient;
-  /** Units to report, in display order. */
-  units: readonly string[];
-  /** Subset of `units` that has a public HTTPS endpoint, mapped to its hosts. */
-  webUnits: ReadonlyMap<string, readonly string[]>;
   /** Static links always shown (e.g. the GitHub repo). */
   staticLinks: readonly DashboardLink[];
 }
@@ -59,9 +55,9 @@ export function makeGetOverview(deps: GetOverviewDeps) {
 }
 
 async function build(deps: GetOverviewDeps): Promise<DashboardOverview> {
-  const { systemd, prometheus, units, webUnits, staticLinks } = deps;
+  const { systemd, prometheus, staticLinks } = deps;
 
-  const services: Service[] = await systemd.listServices(units, webUnits);
+  const services: Service[] = await systemd.listServices();
 
   const [
     cpu,

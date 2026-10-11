@@ -9,11 +9,7 @@ import { buildUseCases } from "./application/use-cases.ts";
 import { env } from "./infrastructure/config/env.ts";
 import { logger } from "./infrastructure/observability/logger.ts";
 import { createPrometheusClient } from "./infrastructure/prometheus/prometheus-client.ts";
-import {
-  createSystemdInspector,
-  MONITORED_UNITS,
-  WEB_UNITS,
-} from "./infrastructure/systemd/systemd-inspector.ts";
+import { createSystemdInspector } from "./infrastructure/systemd/systemd-inspector.ts";
 import {
   resolveLocale,
   withLocaleHead,
@@ -27,8 +23,6 @@ const useCases = buildUseCases(
     prometheus: createPrometheusClient(env.PROMETHEUS_URL),
   },
   {
-    units: MONITORED_UNITS,
-    webUnits: WEB_UNITS,
     staticLinks: [{ url: env.GITHUB_REPO_URL, label: "GitHub" }],
   },
 );

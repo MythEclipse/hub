@@ -56,10 +56,18 @@ check any claim against a running system in one click.
   `scripts/deploy-direct.sh` to the VPS, which checks out the SHA under
   `/opt/hub/releases/<sha>`, builds, flips the `current` symlink, restarts the
   `hub` systemd unit and health-checks. Rollback on failure.
-- The monitored host is `host1760805970`. 29 systemd units are tracked by name
-  in `MONITORED_UNITS` (`apps/api/src/infrastructure/systemd/systemd-inspector.ts`),
-  kept in sync by hand. Hostnames are an explicit `WEB_UNITS` map, not derived
-  from unit names, because they frequently differ.
+- The monitored host is `host1760805970`. Nothing about the service list is
+  written in source: units are read from `/etc/systemd/system`, state from
+  `systemctl show`, hostnames from Caddy's live admin API joined on port, and a
+  hostname is only linked when `ss` shows its upstream accepting. A hand-kept
+  list outlives what it names — `hermyhq` stayed on the dashboard for weeks
+  after the app was deleted, because its unit file outlived the app too.
+- A unit is dropped when its `ExecStart` program is gone (`ENOENT`). `EACCES`
+  is deliberately not a signal: this process runs as `hub`, and most programs
+  are root-owned, so a plain existence check would hide healthy services.
+- Ports for `bws-exec` units are the one exception, listed in
+  `/etc/hub/unit-ports.conf`, because the value is injected from Bitwarden at
+  exec time and exists nowhere on disk.
 - Local dev: `pnpm dev` runs api (:4003) and web (:5173) together; Vite proxies
   `/rpc` so the browser stays same-origin.
 - Data refresh: both routes poll `dashboard.getOverview` every 15 s on one

@@ -7,10 +7,14 @@ import type { Service } from "../dashboard/dashboard.ts";
  * in infrastructure and is injected into the use-case.
  */
 export interface SystemdInspector {
-  /** Units that do not exist on this host are skipped, not reported as errors. */
-  listServices(
-    units: readonly string[],
-    /** Unit name -> public hostnames, for units with a site behind the proxy. */
-    webUnits: ReadonlyMap<string, readonly string[]>,
-  ): Promise<Service[]>;
+  /**
+   * Every service installed on this host, in systemd's own order.
+   *
+   * Takes no arguments: the set of units and the hostnames behind them are
+   * host state, read at call time. Passing them in as arguments is what allowed
+   * a checked-in list to outlive the services it named.
+   *
+   * Units that are not installed are skipped, not reported as errors.
+   */
+  listServices(): Promise<Service[]>;
 }

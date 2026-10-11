@@ -111,40 +111,58 @@ describe("parseSystemctlShow", () => {
 });
 
 describe("listServices against the live systemctl", () => {
-  const noWebUnits: ReadonlyMap<string, readonly string[]> = new Map();
-
-  it("yields no service for a unit that is not installed", async () => {
+  it("reports only units that are still installed", async () => {
+    // The live-host guarantee: nothing appears that the host does not actually
+    // have. On this host that includes `hermyhq`, whose unit file outlived the
+    // app it ran — the defect that kept a deleted service on the dashboard.
     const { listServices } = createSystemdInspector();
-    const services = await listServices(
-      ["definitely-not-a-real-unit-xyz"],
-      noWebUnits,
-    );
+    const names = (await listServices()).map((service) => service.name);
 
-    assert.deepEqual(services, []);
+    assert.ok(!names.includes("hermyhq"), "deleted unit reported as a service");
+    assert.ok(!names.includes("hermyhq-render"));
+    assert.ok(!names.includes("definitely-not-a-real-unit-xyz"));
   });
 
-  it("returns at most one entry per requested unit, installed or not", async () => {
+  it("keeps units whose program is merely unreadable, not absent", async () => {
+    // The ENOENT/EACCES split: every one of these is root-owned and running,
+    // and a naive existence check would hide all of them.
     const { listServices } = createSystemdInspector();
-    const requested = ["definitely-not-a-real-unit-xyz", "another-fake-unit"];
-    const names = (await listServices(requested, noWebUnits)).map(
-      (s) => s.name,
-    );
+    const names = (await listServices()).map((service) => service.name);
 
-    assert.equal(new Set(names).size, names.length, "no duplicate entries");
-    for (const name of names) {
-      assert.ok(requested.includes(name), `unrequested unit reported: ${name}`);
+    for (const unit of ["pg-internal", "redis-internal", "qdrant-internal"]) {
+      assert.ok(
+        names.includes(unit),
+        `${unit} hidden by a permission, not a deletion`,
+      );
     }
   });
 
-  it("degrades to an empty list when systemctl is unusable", async () => {
+  it("gives no service a hostname whose upstream is not listening", async () => {
+    // A published link is a promise that the site answers. Caddy keeps serving
+    // a hostname long after its upstream is gone.
+    const { listServices } = createSystemdInspector();
+    const services = await listServices();
+
+    assert.ok(
+      !services.some((service) =>
+        service.hosts.includes("hamc.asepharyana.my.id"),
+      ),
+      "a hostname with nothing listening behind it must not be offered as a link",
+    );
+    for (const service of services.filter((s) => s.hasWeb)) {
+      assert.ok(
+        service.hosts.length > 0,
+        `${service.name} claims web with no host`,
+      );
+    }
+  });
+
+  it("degrades to an empty list rather than throwing when systemd is unusable", async () => {
     // A host without systemd, or a hung D-Bus socket, must not throw: one dead
     // dependency cannot be allowed to take the whole overview down with it.
     const { listServices } = createSystemdInspector();
-    const requested = ["caddy", "hub", "prometheus"];
 
-    const services = await withShadowedSystemctl(() =>
-      listServices(requested, new Map([["hub", ["hub.example.test"]]])),
-    );
+    const services = await withShadowedSystemctl(() => listServices());
 
     assert.deepEqual(services, [], "unavailable systemd means no services");
   });

@@ -3,8 +3,7 @@ import {
   makeGetOverview,
 } from "./dashboard/get-overview.ts";
 
-export interface Dependencies
-  extends Omit<GetOverviewDeps, "units" | "webUnits" | "staticLinks"> {}
+export interface Dependencies extends Omit<GetOverviewDeps, "staticLinks"> {}
 
 export interface UseCases {
   dashboard: {

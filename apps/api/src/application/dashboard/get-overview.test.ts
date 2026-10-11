@@ -13,8 +13,6 @@ const deps = {
     query: async () => null,
     queryRange: async () => [],
   },
-  units: ["caddy", "hub"],
-  webUnits: new Map([["hub", ["hub.example.test"]]]),
   staticLinks: [],
 };
 

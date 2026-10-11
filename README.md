@@ -111,8 +111,12 @@ Secrets used: `VPS_HOST`, `VPS_USER`, `SSH_PRIVATE_KEY`.
 | `WEB_DIST_PATH` | — | set in production; omit for API-only |
 | `VITE_API_URL` | — | only when the SPA and API are on different origins |
 
-Service links are not configurable by env: each unit maps to the hostnames
-Caddy actually publishes it on, in `WEB_UNITS` in
-`apps/api/src/infrastructure/systemd/systemd-inspector.ts`. The hostname is
-usually not the unit name (`pr-agent-server` is served at `pr-agent`), so it
-is listed explicitly rather than composed from a base domain.
+Service links need no configuration. The hostname is usually not the unit name
+(`pr-agent-server` is served at `pr-agent`), so it is not composed from a base
+domain: it is read from Caddy's live config and joined to the unit on the port
+behind it. A hostname is only offered when `ss` shows that port accepting, so a
+retired site drops off the dashboard on its own.
+
+The one manual file is `/etc/hub/unit-ports.conf` (`unit=port`), covering units
+whose port `bws-exec` injects from Bitwarden at exec time and which therefore
+exists nowhere on disk. Everything else is read live.
