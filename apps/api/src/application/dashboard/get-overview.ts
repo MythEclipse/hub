@@ -1,4 +1,5 @@
 import type {
+  Capacity,
   DashboardLink,
   DashboardOverview,
   LlmMetrics,
@@ -71,6 +72,11 @@ async function build(deps: GetOverviewDeps): Promise<DashboardOverview> {
     load15,
     netIn,
     netOut,
+    diskTotal,
+    diskAvail,
+    ramTotal,
+    ramAvail,
+    cpuCores,
     netInSpark,
     loadSpark,
     reqSpark,
@@ -103,6 +109,20 @@ async function build(deps: GetOverviewDeps): Promise<DashboardOverview> {
     prometheus.query(
       `sum(rate(node_network_transmit_bytes_total{device!="lo"}[1m]))`,
     ),
+    // Denominators for the three gauges. The disk ratio above already reads
+    // these two series; asking again costs one cached query each and turns a
+    // bare percentage into a real "94 GB of 115 GB".
+    prometheus.query(
+      `node_filesystem_size_bytes{mountpoint="/",fstype!="tmpfs"}`,
+    ),
+    prometheus.query(
+      `node_filesystem_avail_bytes{mountpoint="/",fstype!="tmpfs"}`,
+    ),
+    prometheus.query("node_memory_MemTotal_bytes"),
+    prometheus.query("node_memory_MemAvailable_bytes"),
+    // Counted, not averaged: a CPU percentage means little without knowing
+    // whether it is 2 cores saturated or 8 cores mostly idle.
+    prometheus.query(`count(count by(cpu) (node_cpu_seconds_total))`),
     prometheus.queryRange(
       `sum(rate(node_network_receive_bytes_total{device!="lo"}[1m]))`,
       RANGE_WINDOW_SECONDS,
@@ -143,6 +163,9 @@ async function build(deps: GetOverviewDeps): Promise<DashboardOverview> {
     cpu,
     ram,
     disk,
+    cpuCores,
+    ramBytes: capacity(ramAvail, ramTotal),
+    diskBytes: capacity(diskAvail, diskTotal),
     load1,
     load5,
     load15,
@@ -170,6 +193,24 @@ async function build(deps: GetOverviewDeps): Promise<DashboardOverview> {
     links: buildLinks(staticLinks, services),
     llm,
   };
+}
+
+/**
+ * Builds a used/total pair from an "available" and a "total" reading.
+ *
+ * `avail` is the free space Prometheus reports, which is not the same as unused
+ * space: the filesystem reserves blocks for root. The dashboard's percentage
+ * has always been computed from `avail`, so `used` is derived the same way to
+ * keep the figure and its denominator telling the same story.
+ *
+ * Either side null yields a null pair, never a zero: a "0 GB of 0 GB" reading
+ * would look like an empty disk rather than an unanswered query.
+ */
+function capacity(avail: number | null, total: number | null): Capacity {
+  if (total === null || total <= 0 || avail === null) {
+    return { used: null, total: null };
+  }
+  return { used: total - avail, total };
 }
 
 function buildLinks(

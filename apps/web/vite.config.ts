@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import tailwindcss from "@tailwindcss/vite";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import react from "@vitejs/plugin-react";
@@ -18,6 +19,20 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  resolve: {
+    /**
+     * Mirrors the `#/*` and `#api/*` paths in tsconfig.json.
+     *
+     * tsc reads the paths from tsconfig, so typecheck passed without this —
+     * but Vite does not, and a production build can still resolve an alias the
+     * dev server rejects (or the reverse), which is how a broken page reaches a
+     * screenshot round. Declared here as well so both resolvers agree.
+     */
+    alias: {
+      "#": fileURLToPath(new URL("./src", import.meta.url)),
+      "#api": fileURLToPath(new URL("../api/src", import.meta.url)),
+    },
+  },
   server: {
     port: 5173,
     proxy: {
@@ -41,12 +56,6 @@ export default defineConfig({
         // Vite 8 uses rolldown, which requires manualChunks to be a function
         // (the object form from rollup is rejected).
         manualChunks(id: string) {
-          if (
-            id.includes("node_modules/motion") ||
-            id.includes("node_modules/framer-motion")
-          ) {
-            return "motion";
-          }
           if (id.includes("node_modules/@tanstack")) return "tanstack";
           return undefined;
         },

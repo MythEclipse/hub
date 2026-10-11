@@ -26,10 +26,32 @@ export interface Trace {
   hasError: boolean;
 }
 
+/**
+ * A usage figure with the capacity it is measured against.
+ *
+ * `used` and `total` are both nullable together: a percentage without its
+ * denominator is not a reading, it is a vibe. When Prometheus cannot answer the
+ * capacity query the whole pair is null, so the UI can say "no data" instead of
+ * printing a bare "81.9%" that sounds precise and measures nothing.
+ */
+export interface Capacity {
+  used: number | null;
+  total: number | null;
+}
+
 export interface NodeResources {
   cpu: number | null;
   ram: number | null;
   disk: number | null;
+  /**
+   * Denominators for the three gauges. Each is null independently of its
+   * percentage: Prometheus can answer the ratio while the capacity query is
+   * briefly unavailable, and the UI shows the figure without the total rather
+   * than dropping a true reading over a missing annotation.
+   */
+  cpuCores: number | null;
+  ramBytes: Capacity;
+  diskBytes: Capacity;
   load1: number | null;
   load5: number | null;
   load15: number | null;

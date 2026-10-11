@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { projects, toWord } from "./projects.ts";
+import { projects } from "./projects.ts";
 
 describe("projects catalogue", () => {
   it("is not empty", () => {
@@ -10,15 +10,6 @@ describe("projects catalogue", () => {
   it("has no duplicate names", () => {
     const names = projects.map((p) => p.name);
     assert.equal(new Set(names).size, names.length);
-  });
-
-  it("gives every project a tagline, summary and highlights", () => {
-    for (const p of projects) {
-      assert.ok(p.tagline.trim(), `${p.name} has no tagline`);
-      assert.ok(p.summary.trim(), `${p.name} has no summary`);
-      assert.ok(p.highlights.length > 0, `${p.name} has no highlights`);
-      assert.ok(p.stack.length > 0, `${p.name} has no stack`);
-    }
   });
 
   it("links only over https, and every project has at least one link", () => {
@@ -59,46 +50,14 @@ describe("projects catalogue", () => {
       assert.ok(all.includes(tech), `catalogue no longer mentions ${tech}`);
     }
   });
-});
 
-describe("toWord", () => {
-  it("spells the counts the catalogue actually reaches", () => {
-    // 1..12 are the whole range CARDINALS covers; below that the page would
-    // print a digit and read like a different site.
-    assert.equal(toWord(1), "One");
-    assert.equal(toWord(7), "Seven");
-    assert.equal(toWord(8), "Eight");
-    assert.equal(toWord(12), "Twelve");
-  });
-
-  it("spells zero rather than returning an empty string", () => {
-    // Regression: CARDINALS[0] was "", and a valid-but-empty lookup never
-    // reaches the `??` fallback, so toWord(0) rendered as nothing at all.
-    assert.equal(toWord(0), "Zero");
-  });
-
-  it("falls back to digits past the table", () => {
-    assert.equal(toWord(13), "13");
-    assert.equal(toWord(99), "99");
-  });
-
-  it("matches the catalogue length, so the count cannot go stale", () => {
-    // The exact failure this replaced: the page read "Eight services" in a
-    // hardcoded string while the array held a different number.
-    assert.equal(
-      toWord(projects.length),
-      [
-        "One",
-        "Two",
-        "Three",
-        "Four",
-        "Five",
-        "Six",
-        "Seven",
-        "Eight",
-        "Nine",
-        "Ten",
-      ][projects.length - 1] ?? String(projects.length),
+  it("keeps project names and stack in one language, not translated", () => {
+    // A project name is a proper noun a recruiter searches for. Translating
+    // `mytheclipse` into Indonesian would make the row unsearchable and would
+    // contradict the repo it points at.
+    assert.ok(
+      projects.some((p) => p.name === "mytheclipse"),
+      "catalogue no longer lists the crates.io package by its real name",
     );
   });
 });

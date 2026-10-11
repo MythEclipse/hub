@@ -14,6 +14,10 @@ import {
   MONITORED_UNITS,
   WEB_UNITS,
 } from "./infrastructure/systemd/systemd-inspector.ts";
+import {
+  resolveLocale,
+  withLocaleHead,
+} from "./presentation/http/locale-head.ts";
 import { buildContext } from "./presentation/orpc/context.ts";
 import { buildRouter } from "./presentation/routers/index.ts";
 
@@ -125,7 +129,7 @@ if (distPath && spaReady && indexHtml) {
   });
 
   // Client-side routing: everything else falls through to index.html so
-  // /dashboard and friends resolve in the browser instead of 404ing.
+  // /id/dashboard and friends resolve in the browser instead of 404ing.
   app.get("*", async (c) => {
     // Hashed build output. A missing chunk means the browser is running a stale
     // index.html, so answering it with 200 text/html produces a MIME error at
@@ -133,8 +137,19 @@ if (distPath && spaReady && indexHtml) {
     if (c.req.path.startsWith("/assets/")) return c.notFound();
 
     try {
-      const body = await readFile(indexHtml);
-      return new Response(body, { headers: { "content-type": "text/html" } });
+      const body = await readFile(indexHtml, "utf8");
+      // The origin is taken from the request rather than configured: the
+      // alternates only need to be absolute for crawlers, and the host the
+      // visitor actually reached is more correct than one baked into an env var.
+      const url = new URL(c.req.url);
+      return new Response(
+        withLocaleHead(
+          body,
+          resolveLocale(url.pathname, c.req.header("accept-language") ?? null),
+          url.origin,
+        ),
+        { headers: { "content-type": "text/html; charset=utf-8" } },
+      );
     } catch {
       return c.text("web build not found", 503);
     }

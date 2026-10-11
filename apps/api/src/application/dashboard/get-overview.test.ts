@@ -33,6 +33,9 @@ describe("getOverview", () => {
     assert.equal(overview.node.ram, null);
     assert.equal(overview.node.disk, null);
     assert.equal(overview.node.netIn, null);
+    assert.equal(overview.node.cpuCores, null);
+    assert.deepEqual(overview.node.ramBytes, { used: null, total: null });
+    assert.deepEqual(overview.node.diskBytes, { used: null, total: null });
     assert.deepEqual(overview.rps, []);
     assert.deepEqual(overview.errors, []);
     assert.equal(overview.llm.reqRate, null);
@@ -125,5 +128,65 @@ describe("getOverview", () => {
     await Promise.all([getOverview(), getOverview(), getOverview()]);
 
     assert.equal(systemdCalls, 1, "concurrent polls must share one scrape");
+  });
+
+  it("reports a denominator alongside each percentage", async () => {
+    // A bare "81.9%" measures nothing: the reader cannot tell whether that is
+    // a nearly full small disk or a nearly empty large one.
+    const overview = await makeGetOverview({
+      ...deps,
+      systemd: { listServices: async () => [] },
+      prometheus: {
+        query: async (q: string) => {
+          if (q.includes("node_filesystem_size_bytes")) return 123_690_532_864;
+          if (q.includes("node_filesystem_avail_bytes")) return 22_370_123_776;
+          if (q === "node_memory_MemTotal_bytes") return 16_763_211_776;
+          if (q === "node_memory_MemAvailable_bytes") return 9_221_988_352;
+          if (q.startsWith("count(count by(cpu)")) return 8;
+          return null;
+        },
+        queryRange: async () => [],
+      },
+    })();
+
+    assert.equal(overview.node.cpuCores, 8);
+    assert.equal(overview.node.diskBytes.total, 123_690_532_864);
+    assert.equal(
+      overview.node.diskBytes.used,
+      123_690_532_864 - 22_370_123_776,
+    );
+    assert.equal(overview.node.ramBytes.total, 16_763_211_776);
+    assert.equal(overview.node.ramBytes.used, 16_763_211_776 - 9_221_988_352);
+  });
+
+  it("keeps a null total when only the capacity query fails", async () => {
+    // The percentage is a true reading even when the denominator is missing, so
+    // the total degrades on its own rather than taking the figure down with it.
+    const overview = await makeGetOverview({
+      ...deps,
+      systemd: { listServices: async () => [] },
+      prometheus: {
+        query: async (q: string) =>
+          q === "node_memory_MemTotal_bytes" ? null : 55,
+        queryRange: async () => [],
+      },
+    })();
+
+    assert.equal(overview.node.ram, 55);
+    assert.deepEqual(overview.node.ramBytes, { used: null, total: null });
+  });
+
+  it("refuses to report a zero total", async () => {
+    // 0 of 0 reads as an empty disk rather than an unanswered query.
+    const overview = await makeGetOverview({
+      ...deps,
+      systemd: { listServices: async () => [] },
+      prometheus: {
+        query: async (q: string) => (q.includes("size_bytes") ? 0 : 10),
+        queryRange: async () => [],
+      },
+    })();
+
+    assert.deepEqual(overview.node.diskBytes, { used: null, total: null });
   });
 });

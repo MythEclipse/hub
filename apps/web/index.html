@@ -1,14 +1,21 @@
 <!doctype html>
-<html lang="en" class="h-full">
+<html lang="id" class="h-full">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Asep Haryana Saputra</title>
+    <title>Asep Haryana Saputra — formulir inspeksi</title>
     <meta
       name="description"
-      content="Teknik Informatika student exploring backend, infrastructure & DevOps — portfolio and projects by Asep Haryana Saputra."
+      content="Engineer backend dan infrastruktur. Tujuh service yang terdeploy, dan setiap klaimnya bisa dicek."
     />
+
+    <!-- The server rewrites lang and injects hreflang alternates per request
+         (apps/api/src/presentation/http/locale-head.ts). These are the static
+         defaults the dev server and any static host fall back to. -->
+    <link rel="alternate" hreflang="id" href="/id" />
+    <link rel="alternate" hreflang="en" href="/en" />
+
     <script>
       // Applies the stored theme before first paint. Without this the class
       // only lands in a React effect and dark-mode visitors get a full

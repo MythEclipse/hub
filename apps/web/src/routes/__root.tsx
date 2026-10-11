@@ -6,7 +6,6 @@ import {
   useRouteContext,
 } from "@tanstack/react-router";
 import { ThemeProvider } from "next-themes";
-import { DashboardHeader } from "#/components/dashboard/header";
 
 export interface RouterContext {
   queryClient: QueryClient;
@@ -15,7 +14,7 @@ export interface RouterContext {
 export const Route = createRootRouteWithContext<RouterContext>()({
   component: RootComponent,
   notFoundComponent: () => (
-    <div className="flex flex-1 items-center justify-center font-mono text-sm text-muted-foreground">
+    <div className="flex flex-1 items-center justify-center font-mono text-sm text-ink-faint">
       404 — not found
     </div>
   ),
@@ -32,8 +31,10 @@ function RootComponent() {
       disableTransitionOnChange
     >
       <QueryClientProvider client={queryClient}>
-        <div className="flex min-h-full flex-col bg-background text-foreground">
-          <DashboardHeader />
+        <div className="flex min-h-full flex-col bg-paper text-ink">
+          {/* The form header is locale-scoped copy, so it renders inside the
+              $locale layout rather than here: this route sits above the
+              I18nProvider and has no locale to read. */}
           <Outlet />
         </div>
       </QueryClientProvider>
