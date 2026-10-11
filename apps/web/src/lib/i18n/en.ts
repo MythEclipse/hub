@@ -56,9 +56,9 @@ export const en = {
   },
   about: {
     heading: "PROFILE",
-    p1: "I build backend services and the infrastructure that runs them: database schemas, systemd units, and the deploy path that carries a commit onto a server with no manual steps. The language and framework change from project to project; what I usually work on is the path between them.",
-    p2: "What sets it apart: I operate this infrastructure myself, rather than handing an artifact to an ops team. Every claim on this page points at something that is actually running, and if one goes down I know why, because I am the one who changed it.",
-    p3: "For context: I have carried products end to end — architecture, the API, deployment — starting with a university project, ZeaVis Edu, which is still listed above.",
+    p1: "I build backend services and the infrastructure that runs them: database schemas, systemd units, and the deploy path that carries a commit onto a server with no manual steps. The stack changes from project to project, and most of them I started as exercises for myself rather than for a client.",
+    p2: "What sets it apart: I operate this infrastructure myself, rather than handing an artifact to an ops team. Everything here runs for my own use; I am not claiming anyone else uses it. If something goes down I know why, because I am the one who changed it.",
+    p3: "I started with a university project — ZeaVis Edu, still listed above — and kept building on my own because I wanted something that genuinely runs. What that gave me is not production experience, but repetition: designing, debugging, and then keeping it alive.",
   },
   ledger: {
     count: "{n} services built and run, most of them live right now.",
