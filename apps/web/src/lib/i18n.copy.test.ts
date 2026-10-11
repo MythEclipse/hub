@@ -66,21 +66,46 @@ describe("profile copy", () => {
   });
 
   /**
-   * The profile used to read "I have carried products end to end", which
-   * invites the question of who those products served. Nothing on this page
-   * has users but its owner, so the disclaimer has to stay.
+   * Earlier drafts tried to fix overclaiming by stating the negative — "I am
+   * not claiming anyone else uses it", "no other users". That reads as
+   * someone asking for reassurance: mentioning the absence of users is what
+   * puts the idea of users in the reader's head, and the page already reads as
+   * one person's work without it.
+   *
+   * These assertions forbid the disclaimer rather than require it.
    */
-  it("disclaims an audience, so the page cannot imply one it does not have", () => {
-    assert.match(
-      id.about.p2,
-      /saya sendiri/i,
-      "the Indonesian profile should say the work runs for its owner",
-    );
-    assert.match(
-      en.about.p2,
-      /my own use/i,
-      "the English profile should say the work runs for its owner",
-    );
+  it("does not announce the absence of an audience", () => {
+    for (const locale of LOCALES) {
+      for (const s of profileStrings(dictionaries[locale])) {
+        assert.doesNotMatch(
+          s,
+          /\bno other users?\b|\bI claim no\b|\bnot claiming\b|\bnobody\b|\banyone else uses\b/i,
+          `the ${locale} profile denies an audience it never claimed — drop it`,
+        );
+        assert.doesNotMatch(
+          s,
+          /tidak ada pengguna|tidak mengklaim|pengguna lain|tidak ada yang memakai/i,
+          `the ${locale} profile denies an audience it never claimed — drop it`,
+        );
+      }
+    }
+  });
+
+  /**
+   * "rather than handing an artifact to an ops team" implied an employer and a
+   * handoff. There is none: this is one person on one host. Naming any team in
+   * the profile describes an organisation that does not exist.
+   */
+  it("keeps team language out of the profile", () => {
+    for (const locale of LOCALES) {
+      for (const s of profileStrings(dictionaries[locale])) {
+        assert.doesNotMatch(
+          s,
+          /\b(ops\s+)?team\b|\btim\b/i,
+          `the ${locale} profile mentions a team — this is a solo portfolio`,
+        );
+      }
+    }
   });
 });
 

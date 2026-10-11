@@ -57,9 +57,9 @@ export const id = {
   },
   about: {
     heading: "PROFIL",
-    p1: "Saya membangun service backend dan infrastruktur yang menjalankannya: skema basis data, unit systemd, dan jalur deploy yang membawa commit ke server tanpa langkah manual. Stack-nya berganti-ganti dari proyek ke proyek, dan hampir semuanya saya mulai sebagai latihan untuk diri sendiri, bukan untuk klien.",
-    p2: "Yang membedakan: infrastruktur ini saya jalankan sendiri, bukan artefak yang saya serahkan ke tim ops. Semua yang ada di halaman ini berjalan untuk saya sendiri; saya tidak mengklaim ada orang lain yang memakainya. Kalau ada yang mati, saya tahu penyebabnya karena saya yang mengubahnya.",
-    p3: "Saya mulai dari proyek kampus, lalu lanjut membangun sendiri karena mau punya sesuatu yang benar-benar jalan. Yang saya dapat bukan pengalaman produksi, tapi latihan yang berulang: merancang, memecahkan masalah, lalu menjaga agar tetap hidup.",
+    p1: "Saya membangun service backend beserta infrastruktur yang menjalankannya: skema basis data, unit systemd, dan jalur deploy yang membawa commit ke server tanpa langkah manual. Stack-nya berganti-ganti dari proyek ke proyek.",
+    p2: "Yang saya dapat bukan pengalaman produksi, tapi latihan yang berulang: merancang, memecahkan masalah, lalu menjaga agar tetap hidup.",
+    p3: "Saya mulai dari proyek kampus, lalu lanjut membangun sendiri karena mau punya sesuatu yang benar-benar jalan. Kalau ada yang mati di sini, saya tahu penyebabnya karena saya yang mengubahnya.",
   },
   ledger: {
     count:

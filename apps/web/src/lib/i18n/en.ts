@@ -56,9 +56,9 @@ export const en = {
   },
   about: {
     heading: "PROFILE",
-    p1: "I build backend services and the infrastructure that runs them: database schemas, systemd units, and the deploy path that carries a commit onto a server with no manual steps. The stack changes from project to project, and most of them I started as exercises for myself rather than for a client.",
-    p2: "What sets it apart: I operate this infrastructure myself, rather than handing an artifact to an ops team. Everything here runs for my own use; I am not claiming anyone else uses it. If something goes down I know why, because I am the one who changed it.",
-    p3: "I started with a university project, and kept building on my own because I wanted something that genuinely runs. What that gave me is not production experience, but repetition: designing, debugging, and then keeping it alive.",
+    p1: "I build backend services and the infrastructure that runs them: database schemas, systemd units, and the deploy path that carries a commit onto a server with no manual steps. The stack changes from project to project.",
+    p2: "What I have is not production experience, but repetition: designing, debugging, and then keeping it alive.",
+    p3: "I started with a university project, and kept building on my own because I wanted something that genuinely runs. If something here goes down, I know why, because I am the one who changed it.",
   },
   ledger: {
     count: "{n} services built and run, most of them live right now.",

@@ -88,8 +88,8 @@ export const projects: readonly Project[] = [
       "https://github.com/ATLAS-PJK-GM007/ZeaVis-Edu",
     ),
     context: {
-      en: "Capstone team of five — I owned system architecture, the RESTful API, and deployment.",
-      id: "Tim capstone beranggotakan lima orang — saya memegang arsitektur sistem, API RESTful, dan deployment.",
+      en: "One of five authors on this one — system architecture, the RESTful API, and deployment were mine. The repository is under a group account, so the commit history shows who touched what.",
+      id: "Saya salah satu dari lima penulis di proyek ini — arsitektur sistem, API RESTful, dan deployment bagian saya. Repository-nya berada di akun kelompok, jadi riwayat commit menunjukkan siapa yang menyentuh apa.",
     },
   },
   {
@@ -129,7 +129,7 @@ export const projects: readonly Project[] = [
       "prom-client",
     ],
     links: links(
-      "https://gmw.asepharyana.my.id/",
+      "https://imphnen.asepharyana.my.id/messages",
       "https://github.com/asepharyana/GMW",
     ),
   },
