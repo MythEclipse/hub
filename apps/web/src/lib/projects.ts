@@ -284,7 +284,7 @@ export const projects: readonly Project[] = [
       "Vitest",
     ],
     links: links(
-      "https://upload.asepharyana.my.id/",
+      "https://upload.asepharyana.my.id/docs",
       "https://github.com/asepharyana/TeleUploader",
     ),
   },
