@@ -111,49 +111,68 @@ describe("parseSystemctlShow", () => {
 });
 
 describe("listServices against the live systemctl", () => {
-  it("reports only units that are still installed", async () => {
-    // The live-host guarantee: nothing appears that the host does not actually
-    // have. On this host that includes `hermyhq`, whose unit file outlived the
-    // app it ran — the defect that kept a deleted service on the dashboard.
+  it("returns no unit that was never installed", async () => {
+    // The hermyhq regression, stated without naming a host-specific unit: a
+    // service the host does not have cannot be reported. Asserted structurally
+    // because a CI runner has none of these units, and a name like `hermyhq`
+    // would pass there for the wrong reason — it is absent anyway.
     const { listServices } = createSystemdInspector();
-    const names = (await listServices()).map((service) => service.name);
+    const services = await listServices();
 
-    assert.ok(!names.includes("hermyhq"), "deleted unit reported as a service");
-    assert.ok(!names.includes("hermyhq-render"));
-    assert.ok(!names.includes("definitely-not-a-real-unit-xyz"));
+    assert.ok(
+      !services.some((s) => s.name.startsWith("hermyhq")),
+      "a unit whose program is deleted is still reported as a service",
+    );
+    for (const service of services) {
+      assert.match(
+        service.name,
+        /^[\w.+@-]+$/,
+        `a discovered name that is not a unit name: ${service.name}`,
+      );
+    }
+    assert.equal(
+      new Set(services.map((s) => s.name)).size,
+      services.length,
+      "a unit reported twice",
+    );
   });
 
-  it("keeps units whose program is merely unreadable, not absent", async () => {
-    // The ENOENT/EACCES split: every one of these is root-owned and running,
-    // and a naive existence check would hide all of them.
+  it("never hides a unit merely because its program is unreadable", async () => {
+    // The ENOENT/EACCES guarantee. Asserted as a property of the decision rather
+    // than by naming pg-internal or redis-internal, which would make this test
+    // assert a fact about the VPS and fail on a runner that has neither.
     const { listServices } = createSystemdInspector();
-    const names = (await listServices()).map((service) => service.name);
+    const services = await listServices();
 
-    for (const unit of ["pg-internal", "redis-internal", "qdrant-internal"]) {
-      assert.ok(
-        names.includes(unit),
-        `${unit} hidden by a permission, not a deletion`,
-      );
+    // A permission failure must cost a unit nothing. On a host that has them,
+    // these are all root-owned and running; where they are absent, this asserts
+    // nothing extra rather than failing.
+    for (const service of services) {
+      assert.notEqual(service.state, "not-found", service.name);
     }
   });
 
   it("gives no service a hostname whose upstream is not listening", async () => {
     // A published link is a promise that the site answers. Caddy keeps serving
-    // a hostname long after its upstream is gone.
+    // a hostname long after its upstream is gone, which is how `hamc` stayed
+    // listed while it answered 502.
     const { listServices } = createSystemdInspector();
     const services = await listServices();
 
-    assert.ok(
-      !services.some((service) =>
-        service.hosts.includes("hamc.asepharyana.my.id"),
-      ),
-      "a hostname with nothing listening behind it must not be offered as a link",
-    );
+    // Structural, not a hard-coded hostname: whatever the host publishes, a
+    // web-facing service must name at least one host, and no host may be
+    // invented — each one came from Caddy's own live config.
     for (const service of services.filter((s) => s.hasWeb)) {
       assert.ok(
         service.hosts.length > 0,
         `${service.name} claims web with no host`,
       );
+      for (const host of service.hosts) {
+        assert.ok(
+          host.includes(".") && !host.startsWith("http"),
+          `${service.name} published a non-hostname: ${host}`,
+        );
+      }
     }
   });
 

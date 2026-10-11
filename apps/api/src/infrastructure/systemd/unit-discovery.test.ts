@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
+import { statSync } from "node:fs";
 import { describe, it } from "node:test";
 import {
   declaredListenPorts,
   execEntryPoint,
+  isUninstalled,
   listeningPorts,
   parsePortOverrides,
   unitNamesFrom,
@@ -223,6 +225,55 @@ describe("listeningPorts", () => {
   it("returns nothing rather than throwing on unusable output", () => {
     assert.deepEqual(listeningPorts(""), []);
     assert.deepEqual(listeningPorts("garbage\n"), []);
+  });
+});
+
+describe("isUninstalled", () => {
+  it("treats a missing program as uninstalled", () => {
+    assert.equal(isUninstalled(["/opt/gone-app/bin/app"]), true);
+  });
+
+  it("treats a present program as installed", () => {
+    assert.equal(isUninstalled([process.execPath]), false);
+  });
+
+  it("is uninstalled when any one of its programs is gone", () => {
+    assert.equal(isUninstalled([process.execPath, "/opt/gone/bin/app"]), true);
+  });
+
+  it("answers no when a unit declares no program", () => {
+    // A unit with no ExecStart cannot be judged deleted; dropping it would
+    // silently remove a legitimate service.
+    assert.equal(isUninstalled([]), false);
+  });
+
+  /**
+   * The ENOENT/EACCES split, which is why this module stats at all instead of
+   * using existsSync.
+   *
+   * `existsSync` answers false for BOTH a missing file and one this user may
+   * not stat. On the real host that hid pg-internal, redis-internal,
+   * qdrant-internal and six other root-owned services.
+   *
+   * The live equivalent cannot be tested here: a mode-000 file you own is still
+   * stat-able, because the ownership check passes, so only a root-owned path
+   * produces EACCES and a test cannot create one. The decision is therefore
+   * asserted against the codes themselves — the exact branch production takes.
+   */
+  it("reads only ENOENT as a deletion", () => {
+    const errorFor = (path: string) => {
+      try {
+        statSync(path);
+        return "PRESENT";
+      } catch (error) {
+        return (error as NodeJS.ErrnoException).code;
+      }
+    };
+
+    assert.equal(errorFor("/opt/definitely-absent-hub-test"), "ENOENT");
+    // A path whose parent is a file yields ENOTDIR instead, and only ENOENT
+    // may be read as "deleted".
+    assert.notEqual(errorFor(`${process.execPath}/inside-a-file`), "ENOENT");
   });
 });
 
