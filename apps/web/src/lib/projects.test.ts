@@ -53,11 +53,11 @@ describe("projects catalogue", () => {
 
   it("keeps project names and stack in one language, not translated", () => {
     // A project name is a proper noun a recruiter searches for. Translating
-    // `mytheclipse` into Indonesian would make the row unsearchable and would
+    // `scraper` into Indonesian would make the row unsearchable and would
     // contradict the repo it points at.
     assert.ok(
-      projects.some((p) => p.name === "mytheclipse"),
-      "catalogue no longer lists the crates.io package by its real name",
+      projects.some((p) => p.name === "scraper"),
+      "catalogue no longer lists a service by its real name",
     );
   });
 });

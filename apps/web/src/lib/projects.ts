@@ -288,32 +288,4 @@ export const projects: readonly Project[] = [
       "https://github.com/asepharyana/TeleUploader",
     ),
   },
-  {
-    name: "mytheclipse",
-    tagline: {
-      en: "Rust toolkit for async services — published on crates.io",
-      id: "Toolkit Rust untuk service async — terbit di crates.io",
-    },
-    summary: {
-      en: "A family of Rust crates covering the parts of a service that are easy to get subtly wrong: async I/O, background queues, caching, resiliency, traffic control and observability. Other services here are built on it.",
-      id: "Kumpulan crate Rust untuk bagian-bagian service yang gampang salah dengan halus: I/O async, antrean latar, caching, resiliency, kontrol lalu lintas, dan observability. Service lain di sini dibangun di atasnya.",
-    },
-    highlights: {
-      en: [
-        "Published as separate crates so a consumer pulls only the layer it needs",
-        "Cache-aside and L2-Redis behind one interface, with the Redis client fix carried in-tree",
-        "Consumed in production by the scraper service",
-      ],
-      id: [
-        "Terbit sebagai crate terpisah agar konsumen hanya menarik lapisan yang dibutuhkannya",
-        "Cache-aside dan L2-Redis di balik satu interface, dengan perbaikan Redis client dibawa di dalam repo",
-        "Dipakai di production oleh service scraper",
-      ],
-    },
-    stack: ["Rust", "Tokio", "Redis", "crates.io"],
-    links: links(
-      "https://crates.io/crates/mytheclipse",
-      "https://github.com/asepharyana/mytheclipse",
-    ),
-  },
 ];

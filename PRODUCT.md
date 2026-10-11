@@ -99,9 +99,8 @@ check any claim against a running system in one click.
 
 ## Evidence on Hand
 
-- Seven real, deployed projects with verified live hostnames and GitHub sources
+- Six real, deployed projects with verified live hostnames and GitHub sources
   in `apps/web/src/lib/projects.ts` — the product's strongest asset.
-- A public `crates.io` publication (`mytheclipse`), consumed in production.
 - 29 monitored systemd units and a Prometheus endpoint, rendered live.
 - All project images/hostnames are reachable at time of writing.
 - **Absent — must not be fabricated:** no testimonials, no client logos, no
