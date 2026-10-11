@@ -19,6 +19,7 @@ export function createSystemdInspector(): SystemdInspector {
         state: service.state,
         kind: service.kind,
         result: service.result,
+        schedule: service.schedule,
         hasWeb: service.hosts.length > 0,
         hosts: service.hosts,
       }));

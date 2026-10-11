@@ -149,6 +149,70 @@ export function declaredListenPorts(showOutput: string): readonly number[] {
 }
 
 /**
+ * Epoch milliseconds for a timestamp systemd printed, or null.
+ *
+ * systemd formats these as `Sun 2026-10-11 04:09:09 WIB`: a weekday, an ISO
+ * date, a clock time, and a timezone *abbreviation*. `new Date()` cannot read
+ * that — `WIB` is not a UTC offset — and hands back an Invalid Date that
+ * silently renders as "Invalid Date" in the ledger. Parsing it once here, where
+ * the format is a known property of the host, is what lets the browser receive
+ * a number it can format in the reader's own locale.
+ *
+ * Returns null rather than NaN or 0 for anything unrecognised: a schedule that
+ * reads "1 Jan 1970" is a worse lie than no schedule.
+ */
+export function stampToEpoch(stamp: string): number | null {
+  // The weekday and zone are decoration; the date and clock time are the fact.
+  const parsed = Date.parse(
+    stamp.replace(/^[A-Za-z]{3}\s+/, "").replace(/\s+[A-Z]{2,5}$/, ""),
+  );
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
+/**
+ * When this unit will run again, as systemd's timer for it reports.
+ *
+ * The timer is the whole point of a scheduled job: a `Type=oneshot` unit with a
+ * `.timer` beside it is not idle, it is waiting. Rendering that as "inactive"
+ * described the mechanism and hid the intent, which is why the ledger showed
+ * TLS renewal and the PR queue worker as faults on a host where both had just
+ * succeeded.
+ *
+ * Returns null — publish nothing — unless all of these hold, because each
+ * guardrail is a unit on this host that the word would otherwise lie about:
+ *
+ *   - it is a oneshot, so a schedule is the only thing that will start it. A
+ *     daemon with a timer is running or broken, not waiting (`mc-sky`).
+ *   - it is not running right now. A job mid-run needs no schedule.
+ *   - its last run succeeded. A failed run is a fault, and "scheduled" would
+ *     launder a failure into an appointment.
+ *   - a timer exists. `tailscale-routes` is `disabled` with no timer: nothing
+ *     will ever run it, and calling it scheduled invents a future.
+ */
+export function schedulingOf(
+  block: string,
+  timerBlock: string | null,
+  outcome = unitOutcome(block),
+): { lastRun: number; nextRun: number | null } | null {
+  if (timerBlock === null) return null;
+  if (outcome.kind !== "oneshot") return null;
+  if (/^ActiveState=(\S+)/m.exec(block)?.[1] !== "inactive") return null;
+  if (outcome.result !== "success") return null;
+
+  const lastRun = stampToEpoch(
+    /^LastTriggerUSec=(.+)$/m.exec(timerBlock)?.[1]?.trim() ?? "",
+  );
+  if (lastRun === null) return null;
+
+  return {
+    lastRun,
+    nextRun: stampToEpoch(
+      /^NextElapseUSecRealtime=(.+)$/m.exec(timerBlock)?.[1]?.trim() ?? "",
+    ),
+  };
+}
+
+/**
  * Ports currently in LISTEN state, ascending.
  *
  * Deliberately unprivileged (`ss` without `-p`): this process runs as `hub`,
@@ -219,7 +283,14 @@ export function isUninstalled(paths: readonly string[]): boolean {
   });
 }
 
-/** Systemd state for every unit in one call, as blank-line-separated blocks. */
+/**
+ * Systemd state for every unit in one call, as blank-line-separated blocks.
+ *
+ * Timers are read in the same batch as their services for two reasons: the
+ * caller learns whether a unit is scheduled without a second `systemctl` per
+ * unit, and a single batch means one consistent snapshot — a timer read
+ * separately could describe a run the service block has not caught up to yet.
+ */
 async function showUnits(units: readonly string[]): Promise<string> {
   if (units.length === 0) return "";
   try {
@@ -228,6 +299,7 @@ async function showUnits(units: readonly string[]): Promise<string> {
       [
         "show",
         ...units.map((unit) => `${unit}.service`),
+        ...units.map((unit) => `${unit}.timer`),
         "-p",
         "Id",
         "-p",
@@ -242,6 +314,10 @@ async function showUnits(units: readonly string[]): Promise<string> {
         "ExecStart",
         "-p",
         "Environment",
+        "-p",
+        "LastTriggerUSec",
+        "-p",
+        "NextElapseUSecRealtime",
         "--no-pager",
       ],
       { timeout: 2000, maxBuffer: 4 * 1024 * 1024 },
@@ -344,6 +420,13 @@ function liveHostnames(
   return [...new Set(ports.flatMap((port) => byPort.get(port) ?? []))].sort();
 }
 
+/** The `systemctl show` block for one unit, or undefined when absent. */
+function blockFor(show: string, id: string): string | undefined {
+  return show
+    .split("\n\n")
+    .find((candidate) => candidate.startsWith(`Id=${id}\n`));
+}
+
 export interface DiscoveredService {
   name: string;
   state: string;
@@ -357,6 +440,8 @@ export interface DiscoveredService {
   ports: readonly number[];
   /** Hostnames Caddy publishes on any of those ports. */
   hosts: readonly string[];
+  /** When a timer will run this again, as epoch ms; null when nothing will. */
+  schedule: { lastRun: number; nextRun: number | null } | null;
 }
 
 /** Ports currently accepting connections on this host. */
@@ -406,14 +491,12 @@ export async function discoverServices(): Promise<DiscoveredService[]> {
   const services: DiscoveredService[] = [];
 
   for (const name of units) {
-    const block = show
-      .split("\n\n")
-      .find((candidate) => candidate.startsWith(`Id=${name}.service\n`));
+    const block = blockFor(show, `${name}.service`);
     if (!block || /^LoadState=not-found$/m.test(block)) continue;
     if (isUninstalled(execEntryPoint(block))) continue;
 
     const state = /^ActiveState=(\w+)/m.exec(block)?.[1] ?? "unknown";
-    const { kind, result } = unitOutcome(block);
+    const outcome = unitOutcome(block);
     const declared = declaredListenPorts(block);
     const override = overrides.get(name);
     // The declared port wins when there is one, so a unit whose ExecStart
@@ -423,8 +506,8 @@ export async function discoverServices(): Promise<DiscoveredService[]> {
     services.push({
       name,
       state: state === "active" ? "running" : state,
-      kind,
-      result,
+      kind: outcome.kind,
+      result: outcome.result,
       installed: true,
       ports,
       // Only a port that is accepting right now can have a live site behind it.
@@ -433,6 +516,11 @@ export async function discoverServices(): Promise<DiscoveredService[]> {
       hosts: liveHostnames(
         hostnames,
         ports.filter((port) => listening.has(port)),
+      ),
+      schedule: schedulingOf(
+        block,
+        blockFor(show, `${name}.timer`) ?? null,
+        outcome,
       ),
     });
   }

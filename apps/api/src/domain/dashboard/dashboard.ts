@@ -15,8 +15,14 @@ export interface Service {
    * alone would report three healthy timer-driven jobs as degraded.
    */
   kind: "running" | "oneshot";
-  /** Outcome of the most recent run: `success`, `exit-code`, `signal`, … */
+  /** Outcome of the most recent run: success, exit-code, signal, timeout… */
   result: string;
+  /**
+   * When a timer will run this again, as epoch milliseconds, or null when
+   * nothing will. Epoch rather than a formatted string so the browser can
+   * render it in the reader's own locale without re-parsing a host format.
+   */
+  schedule: { lastRun: number; nextRun: number | null } | null;
   hasWeb: boolean;
   /**
    * Hostnames this service is published on, empty when it has no public site.

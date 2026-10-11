@@ -8,6 +8,8 @@ import {
   isDegraded,
   reading,
   safeDur,
+  scheduleDetail,
+  serviceLabel,
   serviceTone,
   withTotal,
 } from "./format.ts";
@@ -123,6 +125,132 @@ describe("isDegraded", () => {
     assert.equal(
       isDegraded(unit("mystery", "running", "running", "unknown")),
       true,
+    );
+  });
+});
+
+describe("serviceLabel", () => {
+  // Epoch ms, as the API now sends: 04:09 WIB and 04:02 WIB the next day.
+  const timer = {
+    lastRun: new Date("2026-10-11T04:09:09+07:00").getTime(),
+    nextRun: new Date("2026-10-12T04:02:50+07:00").getTime(),
+  };
+  const words = {
+    running: "running",
+    scheduled: "scheduled",
+    completed: "completed",
+    disabled: "disabled",
+    state: "inactive",
+  };
+
+  it("names a waiting job by what will start it, not by its resting state", () => {
+    // The defect: certbot-renew read "inactive" beside a green mark, which
+    // described systemd's mechanism and hid why the unit exists at all.
+    assert.equal(
+      serviceLabel(
+        {
+          state: "inactive",
+          kind: "oneshot",
+          result: "success",
+          schedule: timer,
+        },
+        words,
+      ),
+      words.scheduled,
+    );
+  });
+
+  it("still says scheduled with no next run known", () => {
+    // pr-agent-worker's timer is monotonic: systemd states a last trigger and
+    // no wall-clock next elapse. The appointment is real even if unquantified.
+    assert.equal(
+      serviceLabel(
+        {
+          state: "inactive",
+          kind: "oneshot",
+          result: "success",
+          schedule: { lastRun: timer.lastRun, nextRun: null },
+        },
+        words,
+      ),
+      words.scheduled,
+    );
+  });
+
+  it("says completed for a finished job nothing will run again", () => {
+    // tailscale-routes: a successful oneshot with no timer. Not a fault, and
+    // definitely not waiting for an appointment.
+    assert.equal(
+      serviceLabel(
+        {
+          state: "inactive",
+          kind: "oneshot",
+          result: "success",
+          schedule: null,
+        },
+        words,
+      ),
+      words.completed,
+    );
+  });
+
+  it("keeps the raw systemd state for a daemon that is not running", () => {
+    // mc-sky. Calling this "scheduled" would promise a timer that does not
+    // exist; calling it "completed" would launder an outage.
+    assert.equal(
+      serviceLabel(
+        {
+          state: "inactive",
+          kind: "running",
+          result: "success",
+          schedule: null,
+        },
+        words,
+      ),
+      words.state,
+    );
+  });
+
+  it("reports the systemd state verbatim when the unit is in a fault", () => {
+    for (const result of ["exit-code", "signal", "timeout"]) {
+      assert.equal(
+        serviceLabel(
+          { state: "failed", kind: "oneshot", result, schedule: timer },
+          words,
+        ),
+        "failed",
+        `a ${result} run was described as healthy`,
+      );
+    }
+  });
+
+  it("renders the next run, the appointment a reader can act on", () => {
+    // The last run is yesterday's news; "when does this fire again" is the
+    // question a reader actually has about a scheduled job.
+    // A clock, exactly as the row builds one from the epoch it is handed.
+    const clock = (epochMs: number) =>
+      new Date(epochMs).toLocaleTimeString("en-GB", {
+        timeZone: "Asia/Jakarta",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    const rendered = scheduleDetail(timer, clock) ?? "";
+
+    assert.equal(rendered, "↻ 04:02", "the next run was not made readable");
+    assert.equal(
+      /04:09/.test(rendered),
+      false,
+      "the last run crowded out the next one",
+    );
+  });
+
+  it("renders no schedule at all when there is no next run", () => {
+    assert.equal(
+      scheduleDetail({ lastRun: timer.lastRun, nextRun: null }, (v) =>
+        String(v),
+      ),
+      null,
+      "a schedule with no next run must not render a dangling arrow",
     );
   });
 });

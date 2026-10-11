@@ -6,7 +6,10 @@ import {
   fmtUptime,
   gaugeTone,
   reading,
+  type ServiceState,
   safeDur,
+  scheduleDetail,
+  serviceLabel,
   serviceTone,
   type Tone,
   withTotal,
@@ -222,16 +225,21 @@ function Reading({
 function ServiceRow({
   service,
 }: {
-  service: {
-    name: string;
-    state: string;
-    kind: "running" | "oneshot";
-    result: string;
-    hosts: readonly string[];
-  };
+  service: ServiceState & { name: string; hosts: readonly string[] };
 }) {
   const tone = serviceTone(service);
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const nextRun = service.schedule
+    ? scheduleDetail(service.schedule, (stamp) =>
+        new Date(stamp).toLocaleTimeString(
+          locale === "id" ? "id-ID" : "en-GB",
+          {
+            hour: "2-digit",
+            minute: "2-digit",
+          },
+        ),
+      )
+    : null;
 
   return (
     <li className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-rule-soft px-5 py-2.5 transition-colors hover:bg-paper-raised md:px-7">
@@ -242,18 +250,26 @@ function ServiceRow({
       <span
         className={`reading w-[92px] shrink-0 text-[10px] ${TONE_CLASS[tone]}`}
       >
-        {/* A oneshot rests inactive; saying so reads as a fault even when the
-            mark is green, so it is named for what it is. */}
-        {tone === "pass"
-          ? service.kind === "oneshot"
-            ? t.status.completed
-            : t.status.running
-          : (service.state ?? t.status.unknown)}
+        {serviceLabel(service, {
+          running: t.status.running,
+          scheduled: t.status.scheduled,
+          completed: t.status.completed,
+          state: t.status.unknown,
+        })}
       </span>
 
       <span className="reading flex-1 truncate text-[10px] text-ink-faint">
         {service.hosts.length > 0 ? service.hosts.join(" · ") : "—"}
       </span>
+
+      {/* The appointment, not the history: "when does this next run" is the
+          question a reader has about a scheduled job, and the last run is
+          yesterday's news. */}
+      {nextRun && (
+        <span className="reading shrink-0 font-mono text-[9px] text-ink-faint">
+          {nextRun}
+        </span>
+      )}
 
       {service.hosts.length > 0 && (
         <a

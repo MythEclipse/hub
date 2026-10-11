@@ -45,6 +45,7 @@ export const id = {
     pending: "MENUNGGU",
     noData: "TIDAK ADA DATA",
     running: "berjalan",
+    scheduled: "terjadwal",
     completed: "selesai",
     degraded: "mengganggu",
     down: "mati",
@@ -54,7 +55,7 @@ export const id = {
     noServices: "Tidak ada service yang terlapor",
     aboveThreshold: "di atas batas",
     unitSuffix: "unit",
-    servicesRunning: "berjalan dari {n} unit",
+    servicesRunning: "dari {n} unit",
   },
   about: {
     heading: "PROFIL",

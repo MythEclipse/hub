@@ -57,7 +57,9 @@ export interface Messages {
     pending: string;
     noData: string;
     running: string;
-    /** A `Type=oneshot` job that completed; it rests inactive by design. */
+    /** A job a timer will start again; it rests inactive between runs. */
+    scheduled: string;
+    /** A `Type=oneshot` job that finished with nothing left to run it. */
     completed: string;
     degraded: string;
     down: string;

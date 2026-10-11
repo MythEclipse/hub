@@ -7,6 +7,8 @@ import {
   isUninstalled,
   listeningPorts,
   parsePortOverrides,
+  schedulingOf,
+  stampToEpoch,
   unitNamesFrom,
   unitOutcome,
 } from "./unit-discovery.ts";
@@ -403,5 +405,118 @@ describe("parsePortOverrides", () => {
 
   it("returns an empty map for an empty file", () => {
     assert.equal(parsePortOverrides("").size, 0);
+  });
+});
+
+describe("stampToEpoch", () => {
+  it("reads the timestamp systemd actually prints", () => {
+    // `Sun 2026-10-11 04:09:09 WIB`: a weekday, an ISO date, a clock time and a
+    // timezone abbreviation that is not a valid UTC offset.
+    assert.equal(
+      new Date(stampToEpoch("Sun 2026-10-11 04:09:09 WIB") ?? 0).getHours(),
+      4,
+      "the clock time was not preserved",
+    );
+  });
+
+  it("refuses the forms that do not parse rather than returning a wrong date", () => {
+    for (const bad of ["", "n/a", "Sun 2026-13-45 99:99:99 WIB", "garbage"]) {
+      assert.equal(
+        stampToEpoch(bad),
+        null,
+        `invented an epoch for ${JSON.stringify(bad)}`,
+      );
+    }
+  });
+
+  it("keeps each day distinct, so a stale timer cannot read as today's", () => {
+    const a = stampToEpoch("Sun 2026-10-11 04:09:09 WIB");
+    const b = stampToEpoch("Mon 2026-10-12 04:02:50 WIB");
+    assert.ok(a !== null && b !== null && b > a, "two days collapsed");
+  });
+});
+
+describe("schedulingOf", () => {
+  const timer = `LastTriggerUSec=Sun 2026-10-11 04:09:09 WIB
+NextElapseUSecRealtime=Mon 2026-10-12 04:02:50 WIB
+`;
+
+  it("does not publish a schedule for a job nothing will start again", () => {
+    const block = `Id=a.service
+Type=oneshot
+Result=success
+ActiveState=inactive
+`;
+    assert.equal(schedulingOf(block, null), null);
+  });
+
+  it("does not publish a schedule for a job whose last run failed", () => {
+    const block = `Id=a.service
+Type=oneshot
+Result=exit-code
+ActiveState=inactive
+`;
+    assert.equal(schedulingOf(block, timer), null);
+  });
+
+  it("publishes both times for a timer-driven job that succeeded", () => {
+    const block = `Id=a.service
+Type=oneshot
+Result=success
+ActiveState=inactive
+`;
+
+    const schedule = schedulingOf(block, timer);
+    assert.ok(schedule !== null);
+    assert.equal(
+      new Date(schedule.lastRun).getHours(),
+      4,
+      "the last run lost its clock time",
+    );
+    assert.ok(
+      (schedule.nextRun ?? 0) > schedule.lastRun,
+      "the next run is not after the last one",
+    );
+  });
+
+  it("publishes a last run and no next run for a monotonic timer", () => {
+    // pr-agent-worker's timer counts from boot, so systemd states a last
+    // trigger and no wall-clock next elapse. Half the answer is still true,
+    // and inventing the missing half would not be.
+    const block = `Id=a.service
+Type=oneshot
+Result=success
+ActiveState=inactive
+`;
+
+    const schedule = schedulingOf(
+      block,
+      "LastTriggerUSec=Sun 2026-10-11 18:04:02 WIB\n",
+    );
+    assert.ok(schedule !== null);
+    assert.equal(new Date(schedule.lastRun).getHours(), 18);
+    assert.equal(schedule.nextRun, null);
+  });
+
+  it("publishes nothing for a stopped daemon, however it is disabled", () => {
+    // A daemon with no timer will never run again on its own. Calling it
+    // scheduled would promise a future nothing is going to deliver.
+    const block = `Id=a.service
+Type=simple
+Result=success
+ActiveState=inactive
+`;
+
+    assert.equal(schedulingOf(block, timer), null);
+  });
+
+  it("publishes nothing for a job that is running right now", () => {
+    const block = `Id=a.service
+Type=oneshot
+Result=success
+ActiveState=active
+`;
+
+    assert.equal(schedulingOf(block, timer), null);
   });
 });

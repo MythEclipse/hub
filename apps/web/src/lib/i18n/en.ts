@@ -44,6 +44,7 @@ export const en = {
     pending: "PENDING",
     noData: "NO DATA",
     running: "running",
+    scheduled: "scheduled",
     completed: "completed",
     degraded: "degraded",
     down: "down",
@@ -53,7 +54,7 @@ export const en = {
     noServices: "No services reported",
     aboveThreshold: "above threshold",
     unitSuffix: "units",
-    servicesRunning: "running of {n} units",
+    servicesRunning: "of {n} units",
   },
   about: {
     heading: "PROFILE",
