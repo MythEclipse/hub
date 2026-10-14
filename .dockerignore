@@ -1,0 +1,56 @@
+# Dependencies — always reinstalled inside the image from the lockfile.
+node_modules
+.pnpm-store
+
+# Version control / CI — the image is built from the working tree, and a
+# .git dir would add hundreds of MB and bust the layer cache.
+.git
+.gitignore
+.github
+
+# Next.js build output — regenerated inside the builder stage. Shipping the
+# host .next would be wrong (it may hold host-specific absolute paths) and
+# would let a stale build masquerade as a fresh one.
+.next
+out
+build
+
+# Secrets and logs — never bake credentials into an image layer.
+# NOTE: .npmrc is deliberately NOT ignored. It carries pnpm settings
+# (public-hoist-pattern, trustedDependencies) that change what
+# `pnpm install --frozen-lockfile` produces; excluding it makes the image
+# build a different dependency tree than CI does.
+.env
+.env.*
+*.env
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Editor / OS noise
+.DS_Store
+Thumbs.db
+.idea
+.vscode
+*.swp
+
+# Caches and coverage
+coverage
+*.tsbuildinfo
+turbo
+.cache
+
+# Agent/tooling config — not needed to build or serve the app.
+.agents
+.claude
+skills-lock.json
+AGENTS.md
+CLAUDE.md
+README.md
+*.md
+
+# Container definitions themselves are read by the daemon, never COPYed in.
+Dockerfile
+.dockerignore
