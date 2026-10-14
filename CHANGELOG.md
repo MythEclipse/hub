@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/asepharyana/hub/compare/v1.0.0...v1.0.1) (2026-10-14)
+
+
+### Bug Fixes
+
+* make the hub image actually build and run ([7c9da8c](https://github.com/asepharyana/hub/commit/7c9da8cd0dbd19d02e29ee101db884875cfcc76e))
+
 # 1.0.0 (2026-10-14)
 
 
