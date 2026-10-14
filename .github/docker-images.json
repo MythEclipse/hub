@@ -1,0 +1,9 @@
+{
+  "images": [
+    {
+      "package": "hub",
+      "context": ".",
+      "file": "Dockerfile"
+    }
+  ]
+}
