@@ -21,7 +21,7 @@
     "@orpc/server": "1.15.5",
     "hono": "4.13.13",
     "pino": "10.4.0",
-    "zod": "4.6.5"
+    "zod": "4.6.6"
   },
   "devDependencies": {
     "@types/node": "^26",
