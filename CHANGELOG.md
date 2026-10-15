@@ -1,3 +1,10 @@
+## [1.0.5](https://github.com/asepharyana/hub/compare/v1.0.4...v1.0.5) (2026-10-15)
+
+
+### Bug Fixes
+
+* auto-fix code quality [skip ci] ([5a0d31b](https://github.com/asepharyana/hub/commit/5a0d31bd610a2c8291757038ad2f5d463043623f))
+
 ## [1.0.4](https://github.com/asepharyana/hub/compare/v1.0.3...v1.0.4) (2026-10-14)
 
 
