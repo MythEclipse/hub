@@ -1,3 +1,10 @@
+## [1.0.8](https://github.com/asepharyana/hub/compare/v1.0.7...v1.0.8) (2026-10-17)
+
+
+### Bug Fixes
+
+* **ci:** gate deploy on github.ref, not event_name — a dispatch can target a branch ([df2a362](https://github.com/asepharyana/hub/commit/df2a362940d698b36d26637b60ec3c79ca84592a))
+
 ## [1.0.7](https://github.com/asepharyana/hub/compare/v1.0.6...v1.0.7) (2026-10-16)
 
 
