@@ -1,3 +1,10 @@
+## [1.0.9](https://github.com/asepharyana/hub/compare/v1.0.8...v1.0.9) (2026-10-17)
+
+
+### Bug Fixes
+
+* **lint:** migrate biome config to 2.5.15 and reformat — the Lint gate has been red ([a26615e](https://github.com/asepharyana/hub/commit/a26615e22da9ee5ef9e3c5facd324d06012ad6cf))
+
 ## [1.0.8](https://github.com/asepharyana/hub/compare/v1.0.7...v1.0.8) (2026-10-17)
 
 
