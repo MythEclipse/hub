@@ -56,6 +56,12 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    # `github.ref`, NOT `event_name`. A manual `workflow_dispatch` RUNS THIS FILE
+    # FROM THE DISPATCHED REF and DOES receive the repository secrets, so an
+    # event-based gate would still let a dispatch aimed at a branch deploy that
+    # branch. Verified on mcpedia on 2026-10-17: a dispatch against a dependabot
+    # branch flipped every `current` symlink to unreviewed PR code.
+    if: ${{ github.ref == 'refs/heads/main' }}
     timeout-minutes: 30
     steps:
       # Checkout is required: the deploy script is scp'd from THIS checkout,
