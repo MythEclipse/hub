@@ -25,7 +25,8 @@
  */
 
 const LIMIT = Number(process.env.RELEASE_NOTES_LIMIT || 120000);
-const MARKER = '_… earlier changes omitted; see the repository history for the full list._';
+const MARKER =
+  "_… earlier changes omitted; see the repository history for the full list._";
 
 /**
  * @param {object} context  semantic-release context
@@ -36,7 +37,7 @@ function writeReleaseNotes(context, options) {
   const opts = options || {};
   const next = context.nextRelease || {};
 
-  if (!next.notes) return '';
+  if (!next.notes) return "";
 
   // Under the limit: hand back the generator's own text untouched, so a normal
   // release is byte-identical to what the built-in writer would produce.
@@ -62,8 +63,8 @@ function writeReleaseNotes(context, options) {
   if (kept.length === 0) kept.push(sections[0]);
 
   const omitted = sections.length - kept.length;
-  const elision = omitted > 0 ? `\n\n${MARKER}\n` : '';
-  return kept.join('\n\n') + elision;
+  const elision = omitted > 0 ? `\n\n${MARKER}\n` : "";
+  return kept.join("\n\n") + elision;
 }
 
 module.exports = writeReleaseNotes;

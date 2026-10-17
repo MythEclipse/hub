@@ -38,7 +38,13 @@
     [
       "@semantic-release/git",
       {
-        "assets": ["CHANGELOG.md", "package.json", "Cargo.toml", "Cargo.lock", "flake.nix"],
+        "assets": [
+          "CHANGELOG.md",
+          "package.json",
+          "Cargo.toml",
+          "Cargo.lock",
+          "flake.nix"
+        ],
         "message": "chore(release): ${nextRelease.version}"
       }
     ],
