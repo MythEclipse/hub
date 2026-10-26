@@ -17,8 +17,8 @@
     "typecheck": "pnpm -r --filter \"./apps/**\" run typecheck"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.15",
-    "@moonrepo/cli": "2.6.2",
+    "@biomejs/biome": "2.6.2",
+    "@moonrepo/cli": "2.6.4",
     "@types/node": "^26",
     "typescript": "7.0.2"
   },

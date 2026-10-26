@@ -15,18 +15,18 @@ asks for dark explicitly. Nothing glows; paper does not glow.
 
 ## Color
 
-| Token | Light | Role |
-|---|---|---|
-| `--paper` | `#eceae4` | the ground — warm, slightly grey card stock |
-| `--paper-raised` | `#f4f2ee` | a panel sitting above the ground |
-| `--ink` | `#15181c` | primary type, rules, the stub bar |
-| `--ink-soft` | `#3a3e44` | secondary type on paper |
-| `--ink-faint` | `#6b6f76` | field labels, metadata |
-| `--rule` | `#c9c6bf` | hairline separators |
-| `--rule-soft` | `#d5d2cb` | inside a table row |
-| `--pass` | `#1f6b3a` | running, verified, up |
-| `--fail` | `#c0392b` | degraded, failed, down |
-| `--pending` | `#9a6b16` | pending, stale, queued |
+| Token            | Light     | Role                                        |
+| ---------------- | --------- | ------------------------------------------- |
+| `--paper`        | `#eceae4` | the ground — warm, slightly grey card stock |
+| `--paper-raised` | `#f4f2ee` | a panel sitting above the ground            |
+| `--ink`          | `#15181c` | primary type, rules, the stub bar           |
+| `--ink-soft`     | `#3a3e44` | secondary type on paper                     |
+| `--ink-faint`    | `#6b6f76` | field labels, metadata                      |
+| `--rule`         | `#c9c6bf` | hairline separators                         |
+| `--rule-soft`    | `#d5d2cb` | inside a table row                          |
+| `--pass`         | `#1f6b3a` | running, verified, up                       |
+| `--fail`         | `#c0392b` | degraded, failed, down                      |
+| `--pending`      | `#9a6b16` | pending, stale, queued                      |
 
 Dark is one inversion of the same palette, not a second theme: ground
 `#15181c`, panel `#1c1f24`, ink `#eceae4`, rules `#2e3238`. The semantic trio is
@@ -40,7 +40,6 @@ unresolved value. There is no accent colour, because a form has no accent.
 ## Type
 
 Two faces, both self-hosted from the project's own dependency tree.
-
 - **Mono** — every label, figure, index number, timestamp, status mark, and
   tabular column. This is the form's hand: the technician writes readings.
 - **Sans** — prose only: the about paragraphs and project summaries. Never for
@@ -58,7 +57,7 @@ technical claim, so legibility is functional, not decorative.
   the 1px-radius focus ring.
 - **Separation is by hairline rule**, never by shadow and never by a gap alone.
   Every panel boundary is a 1px `--rule` line. Depth does not exist in this
-  world; a panel is defined by being *bounded*, not by floating above another.
+  world; a panel is defined by being _bounded_, not by floating above another.
 - **The stub bar.** A full-height ink column at the left edge, 132px at desktop,
   carrying the form id, the cycle clock, and nothing else. It is the one region
   of the page that is allowed to be solid ink.

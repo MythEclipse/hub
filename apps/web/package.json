@@ -29,12 +29,12 @@
     "@orpc/server": "1.16.1",
     "@tailwindcss/vite": "4.3.3",
     "@tanstack/react-query-devtools": "5.104.5",
-    "@tanstack/router-plugin": "1.168.47",
+    "@tanstack/router-plugin": "1.168.48",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "6.1.2",
     "tailwindcss": "^4",
     "typescript": "7.0.2",
-    "vite": "8.3.4"
+    "vite": "8.3.5"
   }
 }
