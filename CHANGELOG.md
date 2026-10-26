@@ -1,3 +1,11 @@
+## [1.0.14](https://github.com/asepharyana/hub/compare/v1.0.13...v1.0.14) (2026-10-26)
+
+
+### Bug Fixes
+
+* auto-fix code quality ([3187254](https://github.com/asepharyana/hub/commit/3187254e83e0c82786088c1082024f873e6301e8))
+* **deps:** move @moonrepo/cli to 2.6.4 — 2.6.3 never shipped its platform binaries ([a92bd1b](https://github.com/asepharyana/hub/commit/a92bd1bfa2aef13c5c9be79d1eecd1926a33778e))
+
 ## [1.0.13](https://github.com/asepharyana/hub/compare/v1.0.12...v1.0.13) (2026-10-23)
 
 ### Bug Fixes
