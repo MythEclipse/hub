@@ -2,6 +2,18 @@ $schema: https://moonrepo.dev/schemas/project.json
 
 language: "typescript"
 
+# Root manifests that web:build depends on. Project task inputs reject `../`
+# traversal, so the lockfile cannot be named directly from here; a leading `/`
+# anchors the path to the workspace root instead. This must live in the project
+# config: global `fileGroups` in .moon/tasks.yml are not inherited by moon 2.6,
+# and a bare `@name(...)` token is parsed as a literal filename — which silently
+# hashed a path that never exists and disabled the invalidation it promised.
+fileGroups:
+  rootManifests:
+    - "/package.json"
+    - "/pnpm-lock.yaml"
+    - "/pnpm-workspace.yaml"
+
 tasks:
   dev:
     command: "pnpm run dev"
@@ -22,10 +34,10 @@ tasks:
       - "vite.config.ts"
       - "index.html"
       - "package.json"
-      # Root manifests via fileGroup: project inputs reject `../` traversal, so
-      # the lockfile cannot be named directly from apps/web/moon.yml.
-      - "@rootManifests(package.json)"
-      - "@rootManifests(pnpm-lock.yaml)"
+      # `@group(name)` expands the file group defined above; without the `@`
+      # the entry is a plain path, and a `@name(...)` form is not a token at
+      # all — moon records it verbatim and the hash never changes.
+      - "@group(rootManifests)"
     outputs:
       - "dist/**/*"
 

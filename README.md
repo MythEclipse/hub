@@ -10,7 +10,7 @@ systemd and Prometheus, and a Vite + React SPA that renders it.
 | Layer    | Tech                                                           |
 | -------- | -------------------------------------------------------------- |
 | Monorepo | moon 2.6 + pnpm 10 workspaces                                  |
-| API      | Hono 4 + oRPC 1.15 (`RPCHandler`), Zod-validated env, pino     |
+| API      | Hono 4 + oRPC 1.16 (`RPCHandler`), Zod-validated env, pino     |
 | Web      | React 19 + TanStack Router (file-based) + Vite 8 + Tailwind v4 |
 | Data     | TanStack Query over the oRPC client                            |
 | Lint     | Biome (2-space indent, double quotes)                          |
@@ -139,15 +139,15 @@ version, so an image tag always matches a git tag:
 
 This repo publishes 1 image(s):
 
-| Package | Image                                   |
-| ------- | --------------------------------------- |
-| `hub`   | `ghcr.io/asepharyana/hub:hub:<version>` |
+| Package | Image                               |
+| ------- | ----------------------------------- |
+| `hub`   | `ghcr.io/asepharyana/hub:<version>` |
 
 
 Pull one without touching the registry UI:
 
 ```bash
-docker pull ghcr.io/asepharyana/<repo>:<service>:<version>
+docker pull ghcr.io/asepharyana/hub:<version>
 ```
 
 ### Adding or removing an image
