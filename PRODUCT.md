@@ -99,7 +99,7 @@ check any claim against a running system in one click.
 - The public name **"Asep Haryana Saputra"** and its current voice are binding.
   The portfolio is written in the first person, states mechanisms rather than
   adjectives, and does not hedge: no "passionate about", no "passionate
-  developer". Technical specificity *is* the voice.
+  developer". Technical specificity _is_ the voice.
 - The owner presents as Indonesian (Teknik Informatika student) and the copy
   reflects that; bilingual support is a commitment, not an experiment.
 - The live infrastructure is intentionally visible proof, not hidden

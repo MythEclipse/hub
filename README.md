@@ -7,13 +7,13 @@ systemd and Prometheus, and a Vite + React SPA that renders it.
 
 ## Stack
 
-| Layer | Tech |
-|---|---|
-| Monorepo | moon 2.6 + pnpm 10 workspaces |
-| API | Hono 4 + oRPC 1.15 (`RPCHandler`), Zod-validated env, pino |
-| Web | React 19 + TanStack Router (file-based) + Vite 8 + Tailwind v4 |
-| Data | TanStack Query over the oRPC client |
-| Lint | Biome (2-space indent, double quotes) |
+| Layer    | Tech                                                           |
+| -------- | -------------------------------------------------------------- |
+| Monorepo | moon 2.6 + pnpm 10 workspaces                                  |
+| API      | Hono 4 + oRPC 1.15 (`RPCHandler`), Zod-validated env, pino     |
+| Web      | React 19 + TanStack Router (file-based) + Vite 8 + Tailwind v4 |
+| Data     | TanStack Query over the oRPC client                            |
+| Lint     | Biome (2-space indent, double quotes)                          |
 
 No database, no auth, no multi-tenancy — the dashboard is read-only and the
 portfolio is public, so none of that machinery has anything to do here.
@@ -33,9 +33,9 @@ from `apps/api`, never runtime code.
 
 ## Pages
 
-| Route | Description |
-|---|---|
-| `/` | Portfolio landing — hero, about, skills, project catalogue |
+| Route        | Description                                                        |
+| ------------ | ------------------------------------------------------------------ |
+| `/`          | Portfolio landing — hero, about, skills, project catalogue         |
 | `/dashboard` | Live infrastructure monitor — systemd services, Prometheus metrics |
 
 The project catalogue is static data in `apps/web/src/lib/projects.ts` and is
@@ -104,12 +104,12 @@ Secrets used: `VPS_HOST`, `VPS_USER`, `SSH_PRIVATE_KEY`.
 
 ## Env
 
-| Variable | Default | Notes |
-|---|---|---|
-| `PORT` | `4003` | |
-| `PROMETHEUS_URL` | `http://127.0.0.1:9090` | |
-| `WEB_DIST_PATH` | — | set in production; omit for API-only |
-| `VITE_API_URL` | — | only when the SPA and API are on different origins |
+| Variable         | Default                 | Notes                                              |
+| ---------------- | ----------------------- | -------------------------------------------------- |
+| `PORT`           | `4003`                  |                                                    |
+| `PROMETHEUS_URL` | `http://127.0.0.1:9090` |                                                    |
+| `WEB_DIST_PATH`  | —                       | set in production; omit for API-only               |
+| `VITE_API_URL`   | —                       | only when the SPA and API are on different origins |
 
 Service links need no configuration. The hostname is usually not the unit name
 (`pr-agent-server` is served at `pr-agent`), so it is not composed from a base
@@ -126,11 +126,11 @@ exists nowhere on disk. Everything else is read live.
 Every push to `main` is analysed by [semantic-release](https://semantic-release.gitbook.io/).
 The commit prefix decides the version bump — nobody types a version number:
 
-| Commit | Result |
-|---|---|
-| `feat(scope): …` | minor bump |
-| `fix(scope): …` | patch bump |
-| `BREAKING CHANGE:` in the footer | major bump |
+| Commit                                             | Result                           |
+| -------------------------------------------------- | -------------------------------- |
+| `feat(scope): …`                                   | minor bump                       |
+| `fix(scope): …`                                    | patch bump                       |
+| `BREAKING CHANGE:` in the footer                   | major bump                       |
 | `chore`, `ci`, `docs`, `refactor`, `test`, `build` | patch bump, or no release at all |
 
 A release publishes a tag, a GitHub Release and the changelog. The same workflow
@@ -139,9 +139,9 @@ version, so an image tag always matches a git tag:
 
 This repo publishes 1 image(s):
 
-| Package | Image |
-|---|---|
-| `hub` | `ghcr.io/asepharyana/hub:hub:<version>` |
+| Package | Image                                   |
+| ------- | --------------------------------------- |
+| `hub`   | `ghcr.io/asepharyana/hub:hub:<version>` |
 
 
 Pull one without touching the registry UI:
@@ -156,9 +156,7 @@ Do not edit `.github/workflows/release.yml` to change which images are built.
 The list lives in `.github/docker-images.json`:
 
 ```json
-{ "images": [
-  { "package": "<service>", "context": ".", "file": "Dockerfile" }
-] }
+{ "images": [{ "package": "<service>", "context": ".", "file": "Dockerfile" }] }
 ```
 
 - `package` becomes the GHCR path component, so it must be lowercase
