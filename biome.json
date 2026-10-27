@@ -14,7 +14,8 @@
       "!dist",
       "!build",
       "!apps/web/src/routeTree.gen.ts",
-      "!pnpm-lock.yaml"
+      "!pnpm-lock.yaml",
+      "!CHANGELOG.md"
     ]
   },
   "formatter": {
