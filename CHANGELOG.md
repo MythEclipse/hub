@@ -1,3 +1,10 @@
+## [1.0.18](https://github.com/MythEclipse/hub/compare/v1.0.17...v1.0.18) (2026-11-01)
+
+
+### Bug Fixes
+
+* **deploy:** fetch the deploy ref from MythEclipse ([3e55a25](https://github.com/MythEclipse/hub/commit/3e55a25c09eba5a7a1363f6c417eb504b1ff8595))
+
 ## [1.0.17](https://github.com/MythEclipse/hub/compare/v1.0.16...v1.0.17) (2026-11-01)
 
 ## [1.0.16](https://github.com/asepharyana/hub/compare/v1.0.15...v1.0.16) (2026-10-30)
