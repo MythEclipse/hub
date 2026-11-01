@@ -24,7 +24,7 @@
 #   SKIP_RESTART=1  -> skip the systemd restart (verification only)
 set -Eeuo pipefail
 
-REPO_URL="${DEPLOY_REPO_URL:-https://github.com/asepharyana/hub.git}"
+REPO_URL="${DEPLOY_REPO_URL:-https://github.com/MythEclipse/hub.git}"
 RELEASES_DIR="${RELEASES_DIR:-/opt/hub/releases}"
 CURRENT_LINK="${CURRENT_LINK:-/opt/hub/current}"
 PREV_DIR="${CURRENT_LINK}.previous"
