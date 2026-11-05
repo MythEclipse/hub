@@ -1,3 +1,10 @@
+## [1.0.19](https://github.com/MythEclipse/hub/compare/v1.0.18...v1.0.19) (2026-11-05)
+
+
+### Bug Fixes
+
+* **deps:** stop the auto-merge gate reading its own check run ([8db8018](https://github.com/MythEclipse/hub/commit/8db8018dc12eb5588edb823d8564abcffd9fe6ec))
+
 ## [1.0.18](https://github.com/MythEclipse/hub/compare/v1.0.17...v1.0.18) (2026-11-01)
 
 
