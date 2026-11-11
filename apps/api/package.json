@@ -17,9 +17,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@hono/node-server": "2.1.5",
-    "@orpc/server": "1.16.1",
-    "hono": "4.13.14",
+    "@hono/node-server": "2.1.6",
+    "@orpc/server": "1.16.2",
+    "hono": "4.13.17",
     "pino": "10.4.0",
     "zod": "4.6.7"
   },
