@@ -86,38 +86,18 @@ export interface Messages {
   dashboard: {
     title: string;
     note: string;
-    node: string;
     cpu: string;
     ofCores: string;
     ram: string;
     disk: string;
     services: string;
-    llm: string;
-    traces: string;
-    links: string;
-    load: string;
-    load1: string;
-    load5: string;
-    load15: string;
-    netIn: string;
-    netOut: string;
-    uptime: string;
-    reqRate: string;
-    tokRate: string;
     tokSpeed: string;
-    lines: string;
-    duration: string;
-    durationAvg: string;
-    spans: string;
-    error: string;
     returnTo: string;
     /** The ROUTER block's own labels, now that it is probed, not scraped. */
-    router: string;
     routerReachable: string;
     routerUnreachable: string;
     routerModel: string;
     routerLatency: string;
-    routerProbing: string;
     routerChecked: string;
   };
   /**

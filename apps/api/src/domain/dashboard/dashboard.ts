@@ -34,14 +34,6 @@ export interface Service {
   hosts: readonly string[];
 }
 
-export interface Trace {
-  service: string;
-  operation: string;
-  duration: number;
-  spans: number;
-  hasError: boolean;
-}
-
 /**
  * A usage figure with the capacity it is measured against.
  *
@@ -55,24 +47,31 @@ export interface Capacity {
   total: number | null;
 }
 
+/**
+ * What the sheet actually renders, and nothing else.
+ *
+ * Fields that no component reads used to live here — load averages, network
+ * throughput, and four sparkline arrays. They were fetched on every poll, and
+ * two of the sparklines were fed by PromQL series that no longer exist, so they
+ * returned `[]` forever: indistinguishable from "no traffic". A field the UI
+ * never draws cannot report a reading; it can only report a fabricated zero.
+ *
+ * The capacity pairs stay because the RAM and DISK cells render them as the
+ * "94 GB / 115 GB" caption under each percentage.
+ */
 export interface NodeResources {
   cpu: number | null;
   ram: number | null;
   disk: number | null;
   /**
-   * Denominators for the three gauges. Each is null independently of its
-   * percentage: Prometheus can answer the ratio while the capacity query is
-   * briefly unavailable, and the UI shows the figure without the total rather
-   * than dropping a true reading over a missing annotation.
+   * The denominator for the CPU percentage. Null independently of the figure
+   * itself: Prometheus can answer the ratio while the count query is briefly
+   * unavailable, and the UI shows the percentage without the annotation rather
+   * than dropping a true reading over a missing caption.
    */
   cpuCores: number | null;
   ramBytes: Capacity;
   diskBytes: Capacity;
-  load1: number | null;
-  load5: number | null;
-  load15: number | null;
-  netIn: number | null;
-  netOut: number | null;
 }
 
 /**
@@ -112,12 +111,7 @@ export interface DashboardLink {
 
 export interface DashboardOverview {
   services: Service[];
-  traces: Trace[];
   node: NodeResources;
-  rps: number[];
-  latency: number[];
-  errors: number[];
-  traceVolume: number[];
   links: DashboardLink[];
   llm: LlmMetrics;
   /**

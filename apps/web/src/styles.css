@@ -293,15 +293,25 @@
 
 /* ── Reduced motion ───────────────────────────────────────────
    The card still locks on and the rows still settle; they simply arrive
-   instantly. */
+   instantly.
+
+   `!important` is deliberate and load-bearing here: this block must beat the
+   component-level animation declarations regardless of specificity, because a
+   visitor who asked for reduced motion should not have the preference silently
+   lose a cascade fight. The lint rule is disabled for this block rather than
+   for the file, so a new `!important` anywhere else is still reported. */
 
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
+    /* biome-ignore lint/complexity/noImportantStyles: must win the cascade for accessibility */
     animation-duration: 0.01ms !important;
+    /* biome-ignore lint/complexity/noImportantStyles: must win the cascade for accessibility */
     animation-iteration-count: 1 !important;
+    /* biome-ignore lint/complexity/noImportantStyles: must win the cascade for accessibility */
     transition-duration: 0.01ms !important;
+    /* biome-ignore lint/complexity/noImportantStyles: must win the cascade for accessibility */
     scroll-behavior: auto !important;
   }
 
@@ -319,12 +329,16 @@
   .ledger-row,
   .bars,
   .cell-fill {
+    /* biome-ignore lint/complexity/noImportantStyles: must win the cascade for accessibility */
     animation: none !important;
+    /* biome-ignore lint/complexity/noImportantStyles: must win the cascade for accessibility */
     opacity: 1 !important;
+    /* biome-ignore lint/complexity/noImportantStyles: must win the cascade for accessibility */
     transform: none !important;
   }
 
   .lamp-pulse {
+    /* biome-ignore lint/complexity/noImportantStyles: must win the cascade for accessibility */
     animation: none !important;
   }
 }

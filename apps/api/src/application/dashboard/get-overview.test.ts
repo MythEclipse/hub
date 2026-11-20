@@ -32,7 +32,12 @@ const deps = {
   },
   llm: noLlmSample,
   staticLinks: [],
-  publicAccess: null,
+  publicAccess: {
+    baseUrl: "https://router.test/v1",
+    model: "free",
+    apiKey: "sk-test",
+    curl: "curl …",
+  },
 };
 
 describe("getOverview", () => {
@@ -57,18 +62,38 @@ describe("getOverview", () => {
     assert.equal(overview.node.cpu, null);
     assert.equal(overview.node.ram, null);
     assert.equal(overview.node.disk, null);
-    assert.equal(overview.node.netIn, null);
     assert.equal(overview.node.cpuCores, null);
-    assert.deepEqual(overview.node.ramBytes, { used: null, total: null });
-    assert.deepEqual(overview.node.diskBytes, { used: null, total: null });
-    assert.deepEqual(overview.rps, []);
-    assert.deepEqual(overview.errors, []);
     // No sample yet is not "reachable": a router nobody has probed must not
     // read as a healthy one on the cold-start poll.
     assert.equal(overview.llm.reachable, null);
     assert.equal(overview.llm.latencyMs, null);
     assert.equal(overview.llm.model, null);
-    assert.equal(overview.access, null);
+  });
+
+  /**
+   * The payload carries no field the UI does not draw. Four sparkline arrays
+   * and the used/total capacity pairs used to ride along, fetched on every
+   * poll; two of the sparklines were fed by PromQL series that no longer exist
+   * and returned `[]` forever, which is indistinguishable from "no traffic".
+   */
+  it("publishes no field the sheet cannot render", async () => {
+    const overview = await makeGetOverview({
+      ...deps,
+      systemd: { listServices: async () => [] },
+    })();
+
+    for (const dead of ["rps", "latency", "errors", "traceVolume", "traces"]) {
+      assert.equal(
+        dead in overview,
+        false,
+        `"${dead}" is still in the payload but no component reads it`,
+      );
+    }
+    assert.deepEqual(
+      Object.keys(overview.node).sort(),
+      ["cpu", "cpuCores", "disk", "diskBytes", "ram", "ramBytes"],
+      "NodeResources grew a field nothing renders",
+    );
   });
 
   it("passes a measured router sample straight through", async () => {
@@ -107,14 +132,14 @@ describe("getOverview", () => {
       ...deps,
       systemd: { listServices: async () => [] },
       prometheus: {
-        query: async (q: string) => (q === "node_load1" ? 0.42 : 7),
-        queryRange: async () => [1, 2, 3],
+        query: async (q: string) =>
+          q.startsWith("count(count by(cpu)") ? 8 : 7,
+        queryRange: async () => [],
       },
     })();
 
-    assert.equal(overview.node.load1, 0.42);
     assert.equal(overview.node.cpu, 7);
-    assert.deepEqual(overview.rps, [1, 2, 3]);
+    assert.equal(overview.node.cpuCores, 8);
   });
 
   it("links only services that are both web-facing and running", async () => {
@@ -209,6 +234,56 @@ describe("getOverview", () => {
     await Promise.all([getOverview(), getOverview(), getOverview()]);
 
     assert.equal(systemdCalls, 1, "concurrent polls must share one scrape");
+  });
+
+  it("queries only the series it renders", async () => {
+    // Every dead query is a round-trip spent to answer nothing, and a `[]` from
+    // a series that no longer exists is indistinguishable from "no traffic".
+    const asked: string[] = [];
+    await makeGetOverview({
+      ...deps,
+      systemd: { listServices: async () => [] },
+      prometheus: {
+        query: async (q: string) => {
+          asked.push(q);
+          return 1;
+        },
+        queryRange: async () => [],
+      },
+    })();
+
+    assert.equal(asked.length, 8, "the overview should cost eight queries");
+    for (const dead of [
+      "http_server_request_count_total",
+      "llm_api_requests_total",
+      "llm_api_errors_total",
+      "llm_api_completion_tokens_total",
+      "llm_api_tokens_per_second",
+      "llm_api_uptime_seconds",
+      "node_load",
+      "node_network_",
+    ]) {
+      assert.ok(
+        !asked.some((q) => q.includes(dead)),
+        `still querying "${dead}", which nothing renders`,
+      );
+    }
+  });
+
+  it("keeps the CPU core count independent of the CPU percentage", async () => {
+    // A true reading must not disappear because its caption is missing.
+    const overview = await makeGetOverview({
+      ...deps,
+      systemd: { listServices: async () => [] },
+      prometheus: {
+        query: async (q: string) =>
+          q.startsWith("count(count by(cpu)") ? null : 55,
+        queryRange: async () => [],
+      },
+    })();
+
+    assert.equal(overview.node.cpu, 55);
+    assert.equal(overview.node.cpuCores, null);
   });
 
   it("reports a denominator alongside each percentage", async () => {

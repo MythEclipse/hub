@@ -33,8 +33,7 @@ const MARKER =
  * @param {object} options  plugin options
  * @returns {string} markdown release body
  */
-function writeReleaseNotes(context, options) {
-  const opts = options || {};
+function writeReleaseNotes(context) {
   const next = context.nextRelease || {};
 
   if (!next.notes) return "";
