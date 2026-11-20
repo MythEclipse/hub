@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/MythEclipse/hub/compare/v1.1.0...v1.1.1) (2026-11-20)
+
+
+### Bug Fixes
+
+* **docs:** format README and DESIGN so `pnpm lint` passes again ([1d6e07f](https://github.com/MythEclipse/hub/commit/1d6e07f867b5f99d1a5ad9bb8e360160edbd424c))
+
 # [1.1.0](https://github.com/MythEclipse/hub/compare/v1.0.19...v1.1.0) (2026-11-20)
 
 
