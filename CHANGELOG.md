@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/MythEclipse/hub/compare/v1.0.19...v1.1.0) (2026-11-20)
+
+
+### Features
+
+* **dashboard:** probe the 9router live and publish its credentials ([68182d8](https://github.com/MythEclipse/hub/commit/68182d8cc4702f9b25793eddfc24f4c3df785efb))
+
 ## [1.0.19](https://github.com/MythEclipse/hub/compare/v1.0.18...v1.0.19) (2026-11-05)
 
 
