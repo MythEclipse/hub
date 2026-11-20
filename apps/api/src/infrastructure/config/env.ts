@@ -16,14 +16,20 @@ const envSchema = z.object({
   /** Model id sent with every probe and shown in the published example. */
   LLM_ROUTER_MODEL: z.string().min(1).default("free"),
   /**
-   * Key the dashboard probes with, and the same key the portfolio publishes.
+   * The published key. Not a secret: this endpoint is deliberately open so
+   * visitors can call the same router that serves the dashboard reading, and
+   * the key is meant to be handed out. It lives here as the default so the
+   * credentials block works on a host with no configuration at all — making it
+   * a required Bitwarden secret would mean the one thing the page exists to
+   * publish is missing until someone remembers to inject it.
    *
-   * Optional so the API still boots on a host without it: telemetry then reads
-   * as unreachable instead of the process refusing to start over a monitoring
-   * credential. The public credentials block is omitted in that case rather
-   * than publishing an empty bearer token.
+   * Rotate by changing this default (or `hub_LLM_ROUTER_API_KEY` in the
+   * environment, which wins).
    */
-  LLM_ROUTER_API_KEY: z.string().min(1).optional(),
+  LLM_ROUTER_API_KEY: z
+    .string()
+    .min(1)
+    .default("sk-5281d60771dcd653-qqmle7-a599e66e"),
   /** Absolute path to the built SPA. When unset, the API serves RPC only. */
   WEB_DIST_PATH: z.string().optional(),
   NODE_ENV: z

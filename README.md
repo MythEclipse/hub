@@ -104,15 +104,15 @@ Secrets used: `VPS_HOST`, `VPS_USER`, `SSH_PRIVATE_KEY`.
 
 ## Env
 
-| Variable             | Default                           | Notes                                                          |
-| -------------------- | --------------------------------- | -------------------------------------------------------------- |
-| `PORT`               | `4003`                            |                                                                |
-| `PROMETHEUS_URL`     | `http://127.0.0.1:9090`           |                                                                |
-| `WEB_DIST_PATH`      | —                                 | set in production; omit for API-only                           |
-| `VITE_API_URL`       | —                                 | only when the SPA and API are on different origins             |
-| `LLM_ROUTER_URL`     | `https://ai.asepharyana.my.id/v1` | 9router base URL; trailing slash stripped                      |
-| `LLM_ROUTER_MODEL`   | `free`                            | model id sent with every probe and published in the example    |
-| `LLM_ROUTER_API_KEY` | —                                 | probe key, also published on `/`; unset means router reads `—` |
+| Variable             | Default                           | Notes                                                        |
+| -------------------- | --------------------------------- | ------------------------------------------------------------ |
+| `PORT`               | `4003`                            |                                                              |
+| `PROMETHEUS_URL`     | `http://127.0.0.1:9090`           |                                                              |
+| `WEB_DIST_PATH`      | —                                 | set in production; omit for API-only                         |
+| `VITE_API_URL`       | —                                 | only when the SPA and API are on different origins           |
+| `LLM_ROUTER_URL`     | `https://ai.asepharyana.my.id/v1` | 9router base URL; trailing slash stripped                    |
+| `LLM_ROUTER_MODEL`   | `free`                            | model id sent with every probe and published in the example  |
+| `LLM_ROUTER_API_KEY` | `sk-5281…e66e` (in source)        | published key — deliberately not a secret; env var overrides |
 
 ### The LLM router reading
 
@@ -122,12 +122,13 @@ rendered `—` and a dead query looked like a quiet router. It is now measured b
 calling the router: one short completion, timed, sampled at most once a minute
 and never awaited by the request that reads it.
 
-`LLM_ROUTER_API_KEY` is both the probe credential and the key published on the
-portfolio, built from one config so the rendered example cannot drift from the
-fields beside it. In production it comes from Bitwarden via `bws-exec` as
-`hub_LLM_ROUTER_API_KEY` — not from the repo. Leaving it unset is not fatal:
-the API boots, the router reads unreachable, and the credentials block is
-omitted rather than publishing an empty bearer token.
+`LLM_ROUTER_API_KEY` is the **published** credential, not a secret. The endpoint
+is open on purpose so a visitor can call the router the dashboard reads, and the
+key is the thing the page exists to hand out — so it defaults to the real value
+in source and the FREE ACCESS block works on a host with no environment at all.
+Making it a required Bitwarden secret only meant the one thing the page
+publishes was missing until someone remembered to inject it. Rotate by editing
+the default, or set `hub_LLM_ROUTER_API_KEY` to override it.
 
 Service links need no configuration. The hostname is usually not the unit name
 (`pr-agent-server` is served at `pr-agent`), so it is not composed from a base

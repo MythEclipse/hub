@@ -52,13 +52,20 @@ export interface UnitDirent {
  * Symlinks are excluded. A symlink here is either a mask (-> /dev/null) or a
  * vendor alias (-> /usr/lib/...), and neither is an operator-installed service.
  * Following them would list apt-daily as a dashboard service.
+ *
+ * Template units (`foo@.service`) are excluded too. They have no instance, so
+ * they are not a running service, and `systemctl show` rejects the name
+ * outright — which, because every unit is queried in one batch, used to fail
+ * the entire call and blank the whole dashboard. `pr-agent-alert@.service` did
+ * exactly that: 29 healthy units reported as zero.
  */
 export function unitNamesFrom(
   entries: readonly UnitDirent[],
 ): readonly string[] {
   return entries
     .filter((entry) => entry.isFile() && entry.name.endsWith(".service"))
-    .map((entry) => entry.name.replace(/\.service$/, ""));
+    .map((entry) => entry.name.replace(/\.service$/, ""))
+    .filter((name) => !name.includes("@"));
 }
 
 /** Lists the admin unit directory, or nothing if it cannot be read. */
@@ -290,6 +297,12 @@ export function isUninstalled(paths: readonly string[]): boolean {
  * caller learns whether a unit is scheduled without a second `systemctl` per
  * unit, and a single batch means one consistent snapshot — a timer read
  * separately could describe a run the service block has not caught up to yet.
+ *
+ * A non-zero exit is NOT treated as "no data". `systemctl show` still writes a
+ * full block for every unit it understood, and exits 1 only because one name in
+ * the batch was rejected — a template unit, a unit deleted mid-call, a typo.
+ * Discarding that stdout reported 29 healthy services as zero, so the partial
+ * answer is kept and only a total failure yields "".
  */
 async function showUnits(units: readonly string[]): Promise<string> {
   if (units.length === 0) return "";
@@ -323,8 +336,11 @@ async function showUnits(units: readonly string[]): Promise<string> {
       { timeout: 2000, maxBuffer: 4 * 1024 * 1024 },
     );
     return stdout;
-  } catch {
-    return "";
+  } catch (error) {
+    // execFile rejects on a non-zero exit, but the blocks it printed are still
+    // on the error. Prefer those over an empty dashboard.
+    const partial = (error as { stdout?: unknown }).stdout;
+    return typeof partial === "string" ? partial : "";
   }
 }
 

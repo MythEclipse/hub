@@ -71,6 +71,25 @@ describe("unitNamesFrom", () => {
     );
   });
 
+  /**
+   * The defect this guards: `pr-agent-alert@.service` is a template, so it has
+   * no instance and `systemctl show` rejects the name. Because every unit is
+   * queried in one batch, that one rejection failed the whole call and the
+   * dashboard reported 29 healthy services as zero.
+   */
+  it("drops template units, which have no instance to report", () => {
+    assert.deepEqual(
+      unitNamesFrom(
+        dirents([
+          { name: "hub.service", kind: "file" },
+          { name: "pr-agent-alert@.service", kind: "file" },
+        ]),
+      ),
+      ["hub"],
+      "a template unit must never reach systemctl show",
+    );
+  });
+
   it("returns nothing for a directory with no units, rather than throwing", () => {
     assert.deepEqual(unitNamesFrom([]), []);
   });

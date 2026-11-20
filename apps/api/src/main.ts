@@ -30,29 +30,22 @@ const useCases = buildUseCases(
       probe: createLlmRouterProbe({
         baseUrl: env.LLM_ROUTER_URL,
         model: env.LLM_ROUTER_MODEL,
-        // Without a key the probe still runs and reports unreachable, rather
-        // than the API refusing to boot over a monitoring credential.
-        apiKey: env.LLM_ROUTER_API_KEY ?? "",
+        apiKey: env.LLM_ROUTER_API_KEY,
       }),
     }),
   },
   {
     staticLinks: [{ url: env.GITHUB_REPO_URL, label: "GitHub" }],
-    publicAccess: env.LLM_ROUTER_API_KEY
-      ? buildPublicAccess({
-          baseUrl: env.LLM_ROUTER_URL,
-          model: env.LLM_ROUTER_MODEL,
-          apiKey: env.LLM_ROUTER_API_KEY,
-        })
-      : null,
+    // The key is a published credential, not a secret to inject, so this is
+    // always built: the block is the point of the page, and a host with no
+    // environment at all must still serve it.
+    publicAccess: buildPublicAccess({
+      baseUrl: env.LLM_ROUTER_URL,
+      model: env.LLM_ROUTER_MODEL,
+      apiKey: env.LLM_ROUTER_API_KEY,
+    }),
   },
 );
-
-if (!env.LLM_ROUTER_API_KEY) {
-  logger.warn(
-    "LLM_ROUTER_API_KEY is unset — the router will read as unreachable and no public credentials are published",
-  );
-}
 
 const app = new Hono();
 
