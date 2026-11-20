@@ -40,6 +40,7 @@ unresolved value. There is no accent colour, because a form has no accent.
 ## Type
 
 Two faces, both self-hosted from the project's own dependency tree.
+
 - **Mono** — every label, figure, index number, timestamp, status mark, and
   tabular column. This is the form's hand: the technician writes readings.
 - **Sans** — prose only: the about paragraphs and project summaries. Never for
