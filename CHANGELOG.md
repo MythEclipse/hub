@@ -1,3 +1,10 @@
+## [1.1.2](https://github.com/MythEclipse/hub/compare/v1.1.1...v1.1.2) (2026-11-20)
+
+
+### Bug Fixes
+
+* **dashboard:** report the host's services again, and ship the public key ([2e2a9b0](https://github.com/MythEclipse/hub/commit/2e2a9b0432fdd7343588624fa03438723051e917))
+
 ## [1.1.1](https://github.com/MythEclipse/hub/compare/v1.1.0...v1.1.1) (2026-11-20)
 
 
