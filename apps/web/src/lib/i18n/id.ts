@@ -35,6 +35,8 @@ export const id = {
     source: "Source",
     emailAddress: "superaseph@gmail.com",
     linkedinUrl: "https://www.linkedin.com/in/mytheclipse/",
+    copy: "Salin",
+    copied: "Tersalin",
   },
   status: {
     live: "LIVE",
@@ -100,6 +102,23 @@ export const id = {
     spans: "SPAN",
     error: "GALAT",
     returnTo: "Kembali ke formulir",
+    router: "ROUTER LLM",
+    routerReachable: "terjangkau",
+    routerUnreachable: "tidak terjangkau",
+    routerModel: "MODEL",
+    routerLatency: "LATENSI",
+    routerProbing: "memeriksa",
+    routerChecked: "diperiksa {time}",
+  },
+  access: {
+    heading: "AKSES GRATIS",
+    note: "Angka router di dasbor itu adalah panggilan sungguhan ke endpoint ini. Kredensial yang sama terbuka untuk Anda — tanpa daftar, tanpa kartu.",
+    baseUrl: "BASE URL",
+    model: "MODEL",
+    apiKey: "API KEY",
+    example: "CONTOH REQUEST",
+    freeNote:
+      "Model `free` adalah kumpulan yang diatur router, jadi kapasitasnya dibagi bersama dan key-nya bisa diganti tanpa pemberitahuan. Endpoint-nya OpenAI-compatible: arahkan klien apa pun ke base URL dan pakai key-nya sebagai bearer token.",
   },
   footer: { built: "Lembar {id}, dicetak dari infrastruktur yang hidup." },
 } satisfies Messages;

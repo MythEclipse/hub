@@ -2,8 +2,20 @@ import {
   type GetOverviewDeps,
   makeGetOverview,
 } from "./dashboard/get-overview.ts";
+import type { LlmTelemetry } from "./llm/llm-telemetry.ts";
 
-export interface Dependencies extends Omit<GetOverviewDeps, "staticLinks"> {}
+/** What the use-cases need injected. Config (`staticLinks`, `publicAccess`) is separate. */
+export interface Dependencies {
+  systemd: GetOverviewDeps["systemd"];
+  prometheus: GetOverviewDeps["prometheus"];
+  llm: LlmTelemetry;
+}
+
+/** Everything the overview needs that is configuration rather than a dependency. */
+export type OverviewConfig = Pick<
+  GetOverviewDeps,
+  "staticLinks" | "publicAccess"
+>;
 
 export interface UseCases {
   dashboard: {
@@ -17,7 +29,7 @@ export interface UseCases {
  */
 export function buildUseCases(
   deps: Dependencies,
-  config: Omit<GetOverviewDeps, keyof Dependencies>,
+  config: OverviewConfig,
 ): UseCases {
   return {
     dashboard: {

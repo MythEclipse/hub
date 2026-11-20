@@ -6,20 +6,33 @@ import type {
   NodeResources,
   Service,
 } from "../../domain/dashboard/dashboard.ts";
+import type { PublicAccess } from "../../domain/llm/public-access.ts";
 import type { PrometheusClient } from "../../domain/ports/prometheus.ts";
 import type { SystemdInspector } from "../../domain/ports/systemd.ts";
+import type { LlmTelemetry } from "../llm/llm-telemetry.ts";
 
 export interface GetOverviewDeps {
   systemd: SystemdInspector;
   prometheus: PrometheusClient;
+  /**
+   * The LLM router reading. Supplied as a service rather than a set of
+   * PromQL queries: the router moved and its `llm_api_*` series went with it,
+   * so the metrics are measured by calling the router, not scraped.
+   */
+  llm: LlmTelemetry;
   /** Static links always shown (e.g. the GitHub repo). */
   staticLinks: readonly DashboardLink[];
+  /**
+   * Credentials published on the portfolio, or null when the router key is
+   * not configured. Null renders as no block at all, never as an empty key.
+   */
+  publicAccess: PublicAccess | null;
 }
 
 const RANGE_WINDOW_SECONDS = 300;
 const RANGE_STEPS = 20;
 // Every browser tab polls every 15s, and one overview costs 22 systemctl
-// lookups + 18 PromQL queries. A short memo collapses concurrent tabs into a
+// lookups + 10 PromQL queries. A short memo collapses concurrent tabs into a
 // single upstream round-trip; it is far shorter than the poll interval, so no
 // tab can outrun it.
 const OVERVIEW_TTL_MS = 5000;
@@ -55,7 +68,7 @@ export function makeGetOverview(deps: GetOverviewDeps) {
 }
 
 async function build(deps: GetOverviewDeps): Promise<DashboardOverview> {
-  const { systemd, prometheus, staticLinks } = deps;
+  const { systemd, prometheus, llm, staticLinks, publicAccess } = deps;
 
   const services: Service[] = await systemd.listServices();
 
@@ -77,12 +90,6 @@ async function build(deps: GetOverviewDeps): Promise<DashboardOverview> {
     loadSpark,
     reqSpark,
     errSpark,
-    llmReqRate,
-    llmTokRate,
-    llmTokSpeed,
-    llmUptime,
-    llmReqSpark,
-    llmTokSpark,
   ] = await Promise.all([
     prometheus.query(
       `100 - (avg by(instance)(rate(node_cpu_seconds_total{mode="idle"}[1m])) * 100)`,
@@ -125,31 +132,17 @@ async function build(deps: GetOverviewDeps): Promise<DashboardOverview> {
       RANGE_STEPS,
     ),
     prometheus.queryRange("avg(node_load1)", RANGE_WINDOW_SECONDS, RANGE_STEPS),
+    // The router's own request counter is gone, so the request sparkline is
+    // built from this process's HTTP counter alone. It used to be summed with
+    // `llm_api_requests_total`, which meant the series silently contributed
+    // nothing once the router moved and the sparkline understated traffic.
     prometheus.queryRange(
-      `sum(rate(llm_api_requests_total[1m])) + sum(rate(http_server_request_count_total[1m]))`,
+      `sum(rate(http_server_request_count_total[1m]))`,
       RANGE_WINDOW_SECONDS,
       RANGE_STEPS,
     ),
     prometheus.queryRange(
-      `sum(rate(llm_api_errors_total[1m]))`,
-      RANGE_WINDOW_SECONDS,
-      RANGE_STEPS,
-    ),
-    prometheus.query(
-      `sum(rate(llm_api_requests_total{service="llm-api"}[5m]))`,
-    ),
-    prometheus.query(
-      `sum(rate(llm_api_completion_tokens_total{service="llm-api"}[5m]))`,
-    ),
-    prometheus.query(`avg(llm_api_tokens_per_second{service="llm-api"})`),
-    prometheus.query(`llm_api_uptime_seconds{service="llm-api"}`),
-    prometheus.queryRange(
-      `sum(rate(llm_api_requests_total{service="llm-api"}[1m]))`,
-      RANGE_WINDOW_SECONDS,
-      RANGE_STEPS,
-    ),
-    prometheus.queryRange(
-      `sum(rate(llm_api_completion_tokens_total{service="llm-api"}[1m]))`,
+      `sum(rate(http_server_request_count_total{status=~"5.."}[1m]))`,
       RANGE_WINDOW_SECONDS,
       RANGE_STEPS,
     ),
@@ -168,14 +161,10 @@ async function build(deps: GetOverviewDeps): Promise<DashboardOverview> {
     netIn,
     netOut,
   };
-  const llm: LlmMetrics = {
-    reqRate: llmReqRate,
-    tokRate: llmTokRate,
-    tokSpeed: llmTokSpeed,
-    uptime: llmUptime,
-    reqSpark: llmReqSpark,
-    tokSpark: llmTokSpark,
-  };
+
+  // `read()` never awaits the network: it hands back the last sample and
+  // schedules a fresh probe when that sample is stale.
+  const llmMetrics: LlmMetrics = llm.read();
 
   return {
     services,
@@ -187,7 +176,8 @@ async function build(deps: GetOverviewDeps): Promise<DashboardOverview> {
     errors: errSpark,
     traceVolume: netInSpark,
     links: buildLinks(staticLinks, services),
-    llm,
+    llm: llmMetrics,
+    access: publicAccess,
   };
 }
 

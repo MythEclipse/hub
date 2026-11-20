@@ -1,13 +1,13 @@
 import { cn } from "#/lib/cn";
 
 /**
- * The form's atoms.
+ * The test card's atoms.
  *
- * A printed sheet has square corners, hairline rules instead of shadows, and a
- * single hand for its readings. Both surfaces are built from these four, so the
- * world cannot drift between the portfolio and the dashboard: a boundary is a
- * 1px rule, a label is tracked mono uppercase, a figure is tabular mono, and
- * colour only ever reports a state.
+ * A broadcast panel has square corners, hairline rules instead of shadows, and
+ * a single hand for its readings. Both surfaces are built from these five, so
+ * the world cannot drift between the portfolio and the dashboard: a boundary
+ * is a 1px rule, a label is tracked mono uppercase, a figure is tabular mono,
+ * the lamp is the only thing that glows, and colour only ever reports a state.
  */
 
 /** A label in the technician's hand. Never a heading, never a sentence. */
@@ -97,5 +97,40 @@ export function Stamp({ children }: { children: React.ReactNode }) {
     <span className="stamp inline-block rotate-[-2.5deg] border-2 border-pass px-3 py-1.5 font-mono text-[10px] font-bold tracking-[0.12em] text-pass uppercase">
       {children}
     </span>
+  );
+}
+
+/**
+ * The on-air lamp.
+ *
+ * Pure decoration — the verdict text beside it carries the meaning — but it is
+ * the one element allowed to glow, and its behaviour is the page's heartbeat:
+ * healthy burns steady, anything else pulses until it is looked at. Colour
+ * comes from the semantic trio, never assigned here.
+ */
+export function Lamp({
+  tone,
+  className,
+}: {
+  tone: "pass" | "fail" | "pending" | "none";
+  className?: string;
+}) {
+  const color = {
+    pass: "text-pass",
+    fail: "text-fail",
+    pending: "text-pending",
+    none: "text-ink-faint",
+  }[tone];
+
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        "lamp",
+        tone === "fail" || tone === "pending" ? "lamp-pulse" : null,
+        color,
+        className,
+      )}
+    />
   );
 }

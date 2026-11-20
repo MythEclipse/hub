@@ -8,12 +8,31 @@ import { makeGetOverview } from "./get-overview.ts";
  * outage renders as "0% CPU, all clear" instead of "no data".
  */
 
+/**
+ * A telemetry stub that reports "no sample yet", the cold-start state. The
+ * dashboard reading is a probe result now, not a PromQL query, so it is
+ * injected rather than scraped — which is also what makes it testable without
+ * a network.
+ */
+const noLlmSample = {
+  read: () => ({
+    reachable: null,
+    model: null,
+    latencyMs: null,
+    tokSpeed: null,
+    checkedAt: null,
+  }),
+  refresh: () => {},
+};
+
 const deps = {
   prometheus: {
     query: async () => null,
     queryRange: async () => [],
   },
+  llm: noLlmSample,
   staticLinks: [],
+  publicAccess: null,
 };
 
 describe("getOverview", () => {
@@ -44,7 +63,43 @@ describe("getOverview", () => {
     assert.deepEqual(overview.node.diskBytes, { used: null, total: null });
     assert.deepEqual(overview.rps, []);
     assert.deepEqual(overview.errors, []);
-    assert.equal(overview.llm.reqRate, null);
+    // No sample yet is not "reachable": a router nobody has probed must not
+    // read as a healthy one on the cold-start poll.
+    assert.equal(overview.llm.reachable, null);
+    assert.equal(overview.llm.latencyMs, null);
+    assert.equal(overview.llm.model, null);
+    assert.equal(overview.access, null);
+  });
+
+  it("passes a measured router sample straight through", async () => {
+    const checkedAt = 1_760_000_000_000;
+    const overview = await makeGetOverview({
+      ...deps,
+      systemd: { listServices: async () => [] },
+      llm: {
+        read: () => ({
+          reachable: true,
+          model: "free",
+          latencyMs: 2_509,
+          tokSpeed: 3.19,
+          checkedAt,
+        }),
+        refresh: () => {},
+      },
+      publicAccess: {
+        baseUrl: "https://router.test/v1",
+        model: "free",
+        apiKey: "sk-test",
+        curl: "curl …",
+      },
+    })();
+
+    assert.equal(overview.llm.reachable, true);
+    assert.equal(overview.llm.model, "free");
+    assert.equal(overview.llm.latencyMs, 2_509);
+    assert.equal(overview.llm.tokSpeed, 3.19);
+    assert.equal(overview.llm.checkedAt, checkedAt);
+    assert.equal(overview.access?.apiKey, "sk-test");
   });
 
   it("passes measured values straight through", async () => {

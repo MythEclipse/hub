@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { Lamp } from "#/components/ui/form-primitives";
 import { useI18n, useLocalePath } from "#/lib/i18n/context";
 
 const TONE_CLASS = {
@@ -18,12 +19,13 @@ import { orpc } from "#/libs/orpc/client";
 const POLL_INTERVAL_MS = 15000;
 
 /**
- * The stub bar and the sheet's top rule.
+ * The transmission bar.
  *
- * A triplicate form is perforated along one edge: the stub carries the form
- * number and the shift clock, and it is the only region of solid ink on the
- * page. That is why this bar is vertical and dark while everything else is
- * paper — the rule is doing the work, not a shadow.
+ * Every broadcast panel has the same head: the form number, the lamp, the
+ * clock. The lamp is the page's heartbeat — it reports the same verdict the
+ * hero and the dashboard read, because the three can never disagree — and the
+ * test-card strip along the bottom edge is the signature that says the whole
+ * thing is on air.
  */
 export function FormHeader() {
   const { t, locale } = useI18n();
@@ -69,7 +71,7 @@ export function FormHeader() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-rule bg-paper/92 backdrop-blur-sm">
-      <div className="mx-auto flex h-11 max-w-[1400px] items-center justify-between gap-3 px-4 sm:px-6">
+      <div className="mx-auto flex h-12 max-w-[1400px] items-center justify-between gap-3 px-4 sm:px-6">
         <a
           href={localePath("/")}
           className="flex items-baseline gap-2.5 no-underline"
@@ -83,8 +85,13 @@ export function FormHeader() {
         </a>
 
         <div className="flex items-center gap-3">
-          <span className={`reading text-[10px] ${TONE_CLASS[verdict.tone]}`}>
-            {verdict.text}
+          <span className="flex items-center gap-2">
+            <Lamp tone={verdict.tone} />
+            <span
+              className={`reading hidden text-[10px] font-bold tracking-[0.06em] uppercase sm:inline ${TONE_CLASS[verdict.tone]}`}
+            >
+              {verdict.text}
+            </span>
           </span>
           <span className="reading text-[10px] text-ink-faint">{time}</span>
           <button
@@ -98,6 +105,7 @@ export function FormHeader() {
           </button>
         </div>
       </div>
+      <div className="bars h-[3px]" aria-hidden="true" />
     </header>
   );
 }

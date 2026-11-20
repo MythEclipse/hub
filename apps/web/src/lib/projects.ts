@@ -168,8 +168,47 @@ export const projects: readonly Project[] = [
       "Swagger UI",
     ],
     links: links(
-      "https://scraper.asepharyana.my.id/docs",
+      "https://scraper.asepharyana.my.id/",
       "https://github.com/asepharyana/scraper",
+    ),
+  },
+  {
+    name: "TeleUploader",
+    tagline: {
+      en: "File uploads to Telegram, and an S3-compatible front door",
+      id: "Upload file ke Telegram, plus pintu masuk kompatibel S3",
+    },
+    summary: {
+      en: "Upload files to a private Telegram channel and get a public download link back. It also speaks enough S3 to be mounted as a bucket, which is how it backs the upload front end.",
+      id: "Upload file ke channel Telegram privat dan dapatkan tautan unduhan publik. Service ini juga bicara cukup banyak S3 untuk bisa dipasang sebagai bucket, dan itulah cara ia menopang front end upload.",
+    },
+    highlights: {
+      en: [
+        "S3-compatible surface: SigV4 auth, range reads, multipart, virtual-host addressing",
+        "Bounded concurrency and streaming, so a large object never sits fully in memory",
+        "Hono + oRPC over Drizzle and PostgreSQL behind PgBouncer",
+        "Deploys as a single systemd unit — the Docker path is legacy and unused",
+      ],
+      id: [
+        "Permukaan S3-compatible: autentikasi SigV4, range read, multipart, alamat virtual-host",
+        "Concurrency terbatas dan streaming, sehingga objek besar tidak pernah utuh di memori",
+        "Hono + oRPC di atas Drizzle dan PostgreSQL di belakang PgBouncer",
+        "Deploy sebagai satu unit systemd — jalur Docker sudah usang dan tidak terpakai",
+      ],
+    },
+    stack: [
+      "TypeScript",
+      "Hono",
+      "oRPC",
+      "Drizzle",
+      "PostgreSQL",
+      "AWS SDK",
+      "Telegram Bot API",
+      "Vitest",
+    ],
+    links: links(
+      "https://upload.asepharyana.my.id/",
+      "https://github.com/asepharyana/TeleUploader",
     ),
   },
   {
@@ -247,45 +286,6 @@ export const projects: readonly Project[] = [
     links: links(
       "https://wiki.asepharyana.my.id/",
       "https://github.com/asepharyana/mcpedia",
-    ),
-  },
-  {
-    name: "TeleUploader",
-    tagline: {
-      en: "File uploads to Telegram, and an S3-compatible front door",
-      id: "Upload file ke Telegram, plus pintu masuk kompatibel S3",
-    },
-    summary: {
-      en: "Upload files to a private Telegram channel and get a public download link back. It also speaks enough S3 to be mounted as a bucket, which is how it backs the upload front end.",
-      id: "Upload file ke channel Telegram privat dan dapatkan tautan unduhan publik. Service ini juga bicara cukup banyak S3 untuk bisa dipasang sebagai bucket, dan itulah cara ia menopang front end upload.",
-    },
-    highlights: {
-      en: [
-        "S3-compatible surface: SigV4 auth, range reads, multipart, virtual-host addressing",
-        "Bounded concurrency and streaming, so a large object never sits fully in memory",
-        "Hono + oRPC over Drizzle and PostgreSQL behind PgBouncer",
-        "Deploys as a single systemd unit — the Docker path is legacy and unused",
-      ],
-      id: [
-        "Permukaan S3-compatible: autentikasi SigV4, range read, multipart, alamat virtual-host",
-        "Concurrency terbatas dan streaming, sehingga objek besar tidak pernah utuh di memori",
-        "Hono + oRPC di atas Drizzle dan PostgreSQL di belakang PgBouncer",
-        "Deploy sebagai satu unit systemd — jalur Docker sudah usang dan tidak terpakai",
-      ],
-    },
-    stack: [
-      "TypeScript",
-      "Hono",
-      "oRPC",
-      "Drizzle",
-      "PostgreSQL",
-      "AWS SDK",
-      "Telegram Bot API",
-      "Vitest",
-    ],
-    links: links(
-      "https://upload.asepharyana.my.id/docs",
-      "https://github.com/asepharyana/TeleUploader",
     ),
   },
 ];

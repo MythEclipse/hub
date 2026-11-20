@@ -34,6 +34,8 @@ export const en = {
     source: "Source",
     emailAddress: "superaseph@gmail.com",
     linkedinUrl: "https://www.linkedin.com/in/mytheclipse/",
+    copy: "Copy",
+    copied: "Copied",
   },
   status: {
     live: "LIVE",
@@ -98,6 +100,23 @@ export const en = {
     spans: "SPANS",
     error: "ERROR",
     returnTo: "Return to the form",
+    router: "LLM ROUTER",
+    routerReachable: "reachable",
+    routerUnreachable: "unreachable",
+    routerModel: "MODEL",
+    routerLatency: "LATENCY",
+    routerProbing: "probing",
+    routerChecked: "checked {time}",
+  },
+  access: {
+    heading: "FREE ACCESS",
+    note: "The dashboard's router reading above is a real call to this endpoint. The same credentials are yours — no signup, no card.",
+    baseUrl: "BASE URL",
+    model: "MODEL",
+    apiKey: "API KEY",
+    example: "EXAMPLE REQUEST",
+    freeNote:
+      "The `free` model is a router-managed pool, so capacity is shared and the key can be rotated without notice. It is OpenAI-compatible: point any client at the base URL and use the key as a bearer token.",
   },
   footer: { built: "Sheet {id}, printed from live infrastructure." },
 } satisfies Messages;

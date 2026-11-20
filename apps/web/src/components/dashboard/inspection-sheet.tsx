@@ -1,11 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
-import { FieldLabel, Stamp } from "#/components/ui/form-primitives";
+import { FieldLabel, Lamp, Stamp } from "#/components/ui/form-primitives";
 import {
   countDegraded,
-  fmtUptime,
   gaugeTone,
   reading,
+  routerDetail,
+  routerTone,
   type ServiceState,
   safeDur,
   scheduleDetail,
@@ -59,21 +60,20 @@ export function InspectionSheet() {
   );
 
   return (
-    <div className="sheet-print mx-auto flex w-full max-w-[1400px] flex-1 flex-col">
+    <div className="sheet-print mx-auto flex w-full max-w-[1400px] flex-1 flex-col px-4 pb-14 sm:px-6">
       {/* ── Sheet head ──────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-end justify-between gap-4 border-b border-ink px-5 py-6 md:px-7">
+      <div className="flex flex-wrap items-end justify-between gap-4 border-x border-b border-ink px-5 py-6 md:px-7">
         <div>
           <FieldLabel>{t.subject.label}</FieldLabel>
-          <h1 className="mt-2 text-[26px] leading-none font-bold tracking-[-0.02em]">
+          <h1 className="mt-2 text-[clamp(1.6rem,3vw,2.1rem)] leading-none font-bold tracking-[-0.02em]">
             {t.dashboard.title}
           </h1>
           <p className="mt-2 max-w-[58ch] text-[12px] leading-[1.55] text-ink-soft">
             {t.dashboard.note}
           </p>
-          <p
-            className={`reading mt-2 text-[11px] font-bold ${TONE_CLASS[verdict.tone]}`}
-          >
-            {verdict.text}
+          <p className="reading mt-3 flex items-center gap-2 text-[11px] font-bold">
+            <Lamp tone={verdict.tone} />
+            <span className={TONE_CLASS[verdict.tone]}>{verdict.text}</span>
           </p>
         </div>
         <div className="flex items-center gap-4">
@@ -133,14 +133,34 @@ export function InspectionSheet() {
         >
           {reading(data?.node.disk ?? null, (v) => `${v.toFixed(1)}%`)}
         </Reading>
-        <Reading label={t.dashboard.uptime} tone="pass">
-          {reading(data?.llm.uptime ?? null, fmtUptime)}
+        <Reading
+          label={t.dashboard.routerLatency}
+          tone={routerTone(data?.llm.reachable ?? null)}
+          detail={
+            data?.llm.checkedAt != null
+              ? interpolate(t.dashboard.routerChecked, {
+                  time: new Date(data.llm.checkedAt).toLocaleTimeString(
+                    locale === "id" ? "id-ID" : "en-GB",
+                    { hour: "2-digit", minute: "2-digit" },
+                  ),
+                })
+              : null
+          }
+        >
+          {reading(data?.llm.latencyMs ?? null, (v) => `${v.toFixed(0)} ms`)}
         </Reading>
-        <Reading label={t.dashboard.reqRate} tone="pass">
-          {reading(data?.llm.reqRate ?? null, (v) => v.toFixed(2))}
-        </Reading>
-        <Reading label={t.dashboard.tokSpeed} tone="pass">
+        <Reading
+          label={t.dashboard.tokSpeed}
+          tone={routerTone(data?.llm.reachable ?? null)}
+        >
           {reading(data?.llm.tokSpeed ?? null, (v) => `${v.toFixed(0)} t/s`)}
+        </Reading>
+        <Reading
+          label={t.dashboard.routerModel}
+          tone={routerTone(data?.llm.reachable ?? null)}
+          detail={routerDetail(data?.llm.reachable ?? null, t.dashboard)}
+        >
+          {data?.llm.model ?? "—"}
         </Reading>
       </div>
 

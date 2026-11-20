@@ -104,12 +104,30 @@ Secrets used: `VPS_HOST`, `VPS_USER`, `SSH_PRIVATE_KEY`.
 
 ## Env
 
-| Variable         | Default                 | Notes                                              |
-| ---------------- | ----------------------- | -------------------------------------------------- |
-| `PORT`           | `4003`                  |                                                    |
-| `PROMETHEUS_URL` | `http://127.0.0.1:9090` |                                                    |
-| `WEB_DIST_PATH`  | —                       | set in production; omit for API-only               |
-| `VITE_API_URL`   | —                       | only when the SPA and API are on different origins |
+| Variable             | Default                        | Notes                                                              |
+| -------------------- | ------------------------------ | ------------------------------------------------------------------ |
+| `PORT`               | `4003`                         |                                                                    |
+| `PROMETHEUS_URL`     | `http://127.0.0.1:9090`        |                                                                    |
+| `WEB_DIST_PATH`      | —                              | set in production; omit for API-only                               |
+| `VITE_API_URL`       | —                              | only when the SPA and API are on different origins                 |
+| `LLM_ROUTER_URL`     | `https://ai.asepharyana.my.id/v1` | 9router base URL; trailing slash stripped                       |
+| `LLM_ROUTER_MODEL`   | `free`                         | model id sent with every probe and published in the example        |
+| `LLM_ROUTER_API_KEY` | —                              | probe key, also published on `/`; unset means router reads `—`     |
+
+### The LLM router reading
+
+The ROUTER block used to be scraped from `llm_api_*` Prometheus series. Those
+series stopped existing when the router moved to 9router, so every field
+rendered `—` and a dead query looked like a quiet router. It is now measured by
+calling the router: one short completion, timed, sampled at most once a minute
+and never awaited by the request that reads it.
+
+`LLM_ROUTER_API_KEY` is both the probe credential and the key published on the
+portfolio, built from one config so the rendered example cannot drift from the
+fields beside it. In production it comes from Bitwarden via `bws-exec` as
+`hub_LLM_ROUTER_API_KEY` — not from the repo. Leaving it unset is not fatal:
+the API boots, the router reads unreachable, and the credentials block is
+omitted rather than publishing an empty bearer token.
 
 Service links need no configuration. The hostname is usually not the unit name
 (`pr-agent-server` is served at `pr-agent`), so it is not composed from a base

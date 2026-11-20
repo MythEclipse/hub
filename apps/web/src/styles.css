@@ -1,16 +1,22 @@
 @import "tailwindcss";
 
-/* Self-hosted from the project's own dependency tree: the form needs two
+/* Self-hosted from the project's own dependency tree: the signal needs two
    voices — a hand for readings, a body for prose — and nothing else. */
 @import "@fontsource-variable/geist-mono";
 @import "@fontsource-variable/geist";
 
 @custom-variant dark (&:is(.dark *));
 
-/* ── The Inspection Clipboard Report world ────────────────────
-   A technician's triplicate form on a bench. Paper ground, ink type, hairline
-   rules instead of shadows, and colour that only ever means something. Depth
-   does not exist here: a panel is bounded, not floating. */
+/* ── The Broadcast Test Card world ─────────────────────────────
+   The page is a live transmission. The site is not a claim about running
+   production systems, it is one of the running systems — so the surface is
+   drawn like broadcast equipment: a test card on air.
+
+   Paper ground, ink type, hairline rules instead of shadows. Saturated colour
+   has exactly two jobs: the six test-card bars are identity, the semantic
+   trio (pass / pending / fail) is state. The lamp is the one thing that
+   glows, because a lamp physically glows. Depth does not exist: a panel is
+   bounded, not floating. */
 
 @theme inline {
   --color-paper: var(--paper);
@@ -24,16 +30,29 @@
   --color-fail: var(--fail);
   --color-pending: var(--pending);
 
+  /* Test-card bars. Fixed in both themes — a saturated bar reads as a bar on
+     paper and on ink alike. */
+  --color-bar-yellow: #e2b93d;
+  --color-bar-cyan: #2fa8bd;
+  --color-bar-green: #2f9e5f;
+  --color-bar-magenta: #c74f96;
+  --color-bar-red: #d23f31;
+  --color-bar-blue: #3d6fd4;
+
   --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono Variable", ui-monospace, monospace;
 
-  /* Radius is zero in this world. The sheet's paper has square corners; the
-     only exception is the focus ring, drawn as an outline rather than a token
-     so it reads as an exception rather than as a step on a scale. */
+  /* Radius is zero in this world. Broadcast gear is square metal, not rounded
+     plastic; the only curve allowed is the crosshair's registration circle.
+     The focus ring is drawn as an outline rather than a token so it reads as
+     an exception rather than as a step on a scale. */
 
   --animate-sheet-print: ink-bleed 260ms ease-out;
   --animate-stamp-set: stamp-set 180ms cubic-bezier(0.2, 0, 0, 1);
   --animate-cell-fill: cell-fill 320ms ease-out;
+  --animate-bars-sweep: bars-sweep 640ms cubic-bezier(0.16, 1, 0.3, 1) 120ms
+    backwards;
+  --animate-lamp-pulse: lamp-pulse 2.2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
 }
 
 @keyframes ink-bleed {
@@ -70,17 +89,38 @@
   }
 }
 
+@keyframes bars-sweep {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes lamp-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklch, currentColor 45%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 5px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
 :root {
-  --paper: #eceae4;
-  --paper-raised: #f4f2ee;
-  --ink: #15181c;
-  --ink-soft: #3a3e44;
-  --ink-faint: #676a71;
-  --rule: #c9c6bf;
-  --rule-soft: #d5d2cb;
-  --pass: #1f6b3a;
-  --fail: #c0392b;
-  --pending: #8c6114;
+  --paper: #f4f1ea;
+  --paper-raised: #faf8f3;
+  --ink: #131519;
+  --ink-soft: #3d4149;
+  --ink-faint: #5c616b;
+  --rule: #c9c5bb;
+  --rule-soft: #d9d5cc;
+  --pass: #157a44;
+  --fail: #b02f22;
+  --pending: #8a5a10;
 
   color-scheme: light;
 }
@@ -88,16 +128,16 @@
 /* One inversion of the same palette, not a second theme. The semantic trio is
    unchanged and keeps its meaning in both. */
 .dark {
-  --paper: #15181c;
-  --paper-raised: #1c1f24;
-  --ink: #eceae4;
-  --ink-soft: #c2c6cc;
-  --ink-faint: #8b9098;
-  --rule: #2e3238;
-  --rule-soft: #262a30;
-  --pass: #4a9e6b;
-  --fail: #d9705f;
-  --pending: #c99a3f;
+  --paper: #141519;
+  --paper-raised: #1b1d23;
+  --ink: #efece3;
+  --ink-soft: #c3c6cd;
+  --ink-faint: #969aa3;
+  --rule: #2c2f37;
+  --rule-soft: #24272e;
+  --pass: #4fc07f;
+  --fail: #e0705f;
+  --pending: #d4a94a;
 
   color-scheme: dark;
 }
@@ -115,7 +155,7 @@
     @apply font-sans;
   }
 
-  /* The form's labels: the technician's hand, uppercase and tracked. */
+  /* The transmission metadata: the technician's hand, uppercase and tracked. */
   .field-label {
     @apply font-mono text-[10px] tracking-[0.16em] text-ink-faint uppercase;
   }
@@ -131,26 +171,46 @@
   }
 }
 
-/* ── The authored moment ─────────────────────────────────────
-   The form fills itself in. A technician's triplicate is stamped once at the
-   top of the sheet, then each row is ruled in as the pen moves down the page:
-   the left rule of each ledger row draws itself left-to-right, so the list
-   assembles the way the real thing was written rather than fading in as a
-   block. Afterwards the 15s poll only re-fills the reading cells in place, and
-   the stamp re-sets. A form is not a poster, so nothing lifts and nothing
-   cascades sideways.
+/* ── The signature strip ───────────────────────────────────────
+   Six hard-stopped test-card bars. The strip locks on with one left-to-right
+   sweep — the moment the page acquires signal. */
 
-   Timing: exit is never used. Entrance is one sweep per row, staggered only
-   because the rows genuinely arrive in sequence. */
-
-@keyframes rule-draw {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
-  }
+.bars {
+  background: linear-gradient(
+    to right,
+    var(--color-bar-yellow) 0 16.66%,
+    var(--color-bar-cyan) 0 33.33%,
+    var(--color-bar-green) 0 50%,
+    var(--color-bar-magenta) 0 66.66%,
+    var(--color-bar-red) 0 83.33%,
+    var(--color-bar-blue) 0 100%
+  );
+  transform-origin: left center;
+  animation: var(--animate-bars-sweep);
 }
+
+/* ── The lamp ──────────────────────────────────────────────────
+   The one element that glows, because a lamp physically glows. A healthy
+   signal burns steady; a degraded or dead one pulses until it is looked at. */
+
+.lamp {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  background: currentColor;
+}
+
+.lamp-pulse {
+  animation: var(--animate-lamp-pulse);
+}
+
+/* ── The authored moment ───────────────────────────────────────
+   The card fills itself in: the strip locks on, then each ledger row settles
+   as the pen moves down the page, staggered because the rows genuinely arrive
+   in sequence. The 15s poll only re-fills the reading cells in place, and the
+   stamp re-sets. A test card is not a poster, so nothing lifts and nothing
+   cascades sideways. */
 
 @keyframes ink-settle {
   from {
@@ -163,29 +223,32 @@
   }
 }
 
-@keyframes cell-fill {
-  from {
-    opacity: 0.35;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
 .sheet-print {
   animation: var(--animate-sheet-print);
 }
 
-/* The row's own rule draws itself; origin left so it reads as a pen stroke. */
-.ledger-rule {
-  transform-origin: left center;
-  animation: rule-draw 420ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+.ledger-row {
+  animation: ink-settle 340ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
   animation-delay: calc(var(--row-index, 0) * 45ms);
 }
 
-.ledger-row {
-  animation: ink-settle 340ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
-  animation-delay: calc(var(--row-index, 0) * 45ms + 40ms);
+/* Each row owns one bar colour. The chip carries it at rest; on hover the bar
+   draws itself down the row's left edge — the row announcing its identity. */
+.ledger-row::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 2px;
+  background: var(--row-bar, var(--rule));
+  transform: scaleY(0);
+  transform-origin: top center;
+  transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ledger-row:hover::before {
+  transform: scaleY(1);
 }
 
 .stamp {
@@ -229,7 +292,8 @@
 }
 
 /* ── Reduced motion ───────────────────────────────────────────
-   The form still prints and still fills; it simply arrives instantly. */
+   The card still locks on and the rows still settle; they simply arrive
+   instantly. */
 
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -253,10 +317,14 @@
      thing this block must never cost a visitor. */
 
   .ledger-row,
-  .ledger-rule,
+  .bars,
   .cell-fill {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
+  }
+
+  .lamp-pulse {
+    animation: none !important;
   }
 }

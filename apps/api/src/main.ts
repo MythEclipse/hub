@@ -5,8 +5,11 @@ import { serve } from "@hono/node-server";
 import { RPCHandler } from "@orpc/server/fetch";
 import { Hono } from "hono";
 import { requestId } from "hono/request-id";
+import { makeLlmTelemetry } from "./application/llm/llm-telemetry.ts";
+import { buildPublicAccess } from "./application/llm/public-access.ts";
 import { buildUseCases } from "./application/use-cases.ts";
 import { env } from "./infrastructure/config/env.ts";
+import { createLlmRouterProbe } from "./infrastructure/llm/llm-router-probe.ts";
 import { logger } from "./infrastructure/observability/logger.ts";
 import { createPrometheusClient } from "./infrastructure/prometheus/prometheus-client.ts";
 import { createSystemdInspector } from "./infrastructure/systemd/systemd-inspector.ts";
@@ -21,11 +24,35 @@ const useCases = buildUseCases(
   {
     systemd: createSystemdInspector(),
     prometheus: createPrometheusClient(env.PROMETHEUS_URL),
+    // One probe service, shared: the dashboard reading and the published
+    // credentials must describe the same router, model and key.
+    llm: makeLlmTelemetry({
+      probe: createLlmRouterProbe({
+        baseUrl: env.LLM_ROUTER_URL,
+        model: env.LLM_ROUTER_MODEL,
+        // Without a key the probe still runs and reports unreachable, rather
+        // than the API refusing to boot over a monitoring credential.
+        apiKey: env.LLM_ROUTER_API_KEY ?? "",
+      }),
+    }),
   },
   {
     staticLinks: [{ url: env.GITHUB_REPO_URL, label: "GitHub" }],
+    publicAccess: env.LLM_ROUTER_API_KEY
+      ? buildPublicAccess({
+          baseUrl: env.LLM_ROUTER_URL,
+          model: env.LLM_ROUTER_MODEL,
+          apiKey: env.LLM_ROUTER_API_KEY,
+        })
+      : null,
   },
 );
+
+if (!env.LLM_ROUTER_API_KEY) {
+  logger.warn(
+    "LLM_ROUTER_API_KEY is unset — the router will read as unreachable and no public credentials are published",
+  );
+}
 
 const app = new Hono();
 

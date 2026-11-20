@@ -151,6 +151,27 @@ export function scheduleDetail(
   return `↻ ${clock(schedule.nextRun)}`;
 }
 
+/**
+ * Whether the router reading is good, bad, or not yet taken.
+ *
+ * Three states, not two: `null` is "no probe has landed", which must not be
+ * painted green — that was the defect the Prometheus version shipped, where an
+ * outage and a quiet router both rendered as a healthy tone.
+ */
+export function routerTone(reachable: boolean | null): Tone {
+  if (reachable === null) return "none";
+  return reachable ? "pass" : "fail";
+}
+
+/** The word beside the model id: reachable, unreachable, or still probing. */
+export function routerDetail(
+  reachable: boolean | null,
+  words: { routerReachable: string; routerUnreachable: string },
+): string | null {
+  if (reachable === null) return null;
+  return reachable ? words.routerReachable : words.routerUnreachable;
+}
+
 export function fmtUptime(seconds: number): string {
   const s = Math.max(0, Math.floor(seconds));
   if (s < 60) return `${s}s`;

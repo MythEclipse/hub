@@ -47,6 +47,9 @@ export interface Messages {
     source: string;
     emailAddress: string;
     linkedinUrl: string;
+    /** Copies the router key or the example request to the clipboard. */
+    copy: string;
+    copied: string;
   };
   status: {
     live: string;
@@ -108,6 +111,28 @@ export interface Messages {
     spans: string;
     error: string;
     returnTo: string;
+    /** The ROUTER block's own labels, now that it is probed, not scraped. */
+    router: string;
+    routerReachable: string;
+    routerUnreachable: string;
+    routerModel: string;
+    routerLatency: string;
+    routerProbing: string;
+    routerChecked: string;
+  };
+  /**
+   * The credentials block on the portfolio. The prose here states the terms of
+   * use, because a published key with no stated limits is an invitation to
+   * abuse it and a surprise when it is revoked.
+   */
+  access: {
+    heading: string;
+    note: string;
+    baseUrl: string;
+    model: string;
+    apiKey: string;
+    example: string;
+    freeNote: string;
   };
   footer: { built: string };
 }

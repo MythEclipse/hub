@@ -6,6 +6,8 @@
  * for null and would otherwise show a fake "0% CPU" during an outage.
  */
 
+import type { PublicAccess } from "../llm/public-access.ts";
+
 export interface Service {
   name: string;
   state: string;
@@ -73,13 +75,34 @@ export interface NodeResources {
   netOut: number | null;
 }
 
+/**
+ * The LLM router, as measured rather than as scraped.
+ *
+ * These fields used to come from `llm_api_*` Prometheus series, which stopped
+ * existing when the router moved. Prometheus then answered nothing, so every
+ * field rendered `—` and the ROUTER block read as a quiet router rather than a
+ * broken query. The reading now comes from calling the router and timing it.
+ *
+ * Every field is null until the first probe lands. Null is the cold start and
+ * the outage alike; `reachable` is what separates them once a probe has run.
+ */
 export interface LlmMetrics {
-  reqRate: number | null;
-  tokRate: number | null;
+  /**
+   * Whether the last probe got a completion back. Null before the first probe
+   * — a router nobody has asked yet is not a reachable router.
+   */
+  reachable: boolean | null;
+  /** Model id the router answered with, e.g. `free`. Null until probed. */
+  model: string | null;
+  /** End-to-end round-trip of the probe completion, in ms. */
+  latencyMs: number | null;
+  /**
+   * Completion tokens per second over that round-trip. A floor, not a
+   * benchmark: it includes time spent waiting for the first token.
+   */
   tokSpeed: number | null;
-  uptime: number | null;
-  reqSpark: number[];
-  tokSpark: number[];
+  /** Epoch ms of the sample, so the sheet can show how old the reading is. */
+  checkedAt: number | null;
 }
 
 export interface DashboardLink {
@@ -97,4 +120,11 @@ export interface DashboardOverview {
   traceVolume: number[];
   links: DashboardLink[];
   llm: LlmMetrics;
+  /**
+   * Router credentials published on the portfolio, or null when the router key
+   * is unconfigured. It rides on this payload rather than its own procedure so
+   * the hero, the ledger and the credentials block cost one request between
+   * them.
+   */
+  access: PublicAccess | null;
 }
