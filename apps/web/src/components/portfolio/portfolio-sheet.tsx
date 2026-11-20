@@ -139,7 +139,7 @@ export function PortfolioSheet() {
                 </li>
                 <li>
                   <a
-                    href="https://github.com/asepharyana"
+                    href="https://github.com/MythEclipse"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="group inline-flex items-center gap-2 text-[13px] text-ink underline-offset-4 hover:underline"
@@ -148,7 +148,7 @@ export function PortfolioSheet() {
                       size={13}
                       className="shrink-0 text-ink-faint transition-colors group-hover:text-ink"
                     />
-                    github.com/asepharyana
+                    github.com/MythEclipse
                   </a>
                 </li>
               </ul>
