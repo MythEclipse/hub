@@ -1,3 +1,10 @@
+## [1.1.4](https://github.com/MythEclipse/hub/compare/v1.1.3...v1.1.4) (2026-11-20)
+
+
+### Bug Fixes
+
+* **portfolio:** update GitHub link to reflect new username ([2bf3b41](https://github.com/MythEclipse/hub/commit/2bf3b4111f870a36ac1a26684868f192f21c5132))
+
 ## [1.1.3](https://github.com/MythEclipse/hub/compare/v1.1.2...v1.1.3) (2026-11-20)
 
 ## [1.1.2](https://github.com/MythEclipse/hub/compare/v1.1.1...v1.1.2) (2026-11-20)
